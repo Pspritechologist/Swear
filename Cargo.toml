@@ -1,0 +1,7 @@
+[package]
+name = "swear"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+swear_lib = { version = "0.1.0", path = "swear_lib" }

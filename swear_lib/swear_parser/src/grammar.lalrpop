@@ -1,0 +1,92 @@
+use super::*;
+
+grammar;
+
+match {
+	r"[ \t\n]+" => WS, // Whitespace
+	// Flow
+	r";[^\n;]*" => { }, // Comments
+	r"[a-zA-Z0-9_]+" => IDENT,
+	r"'(?:[^'~]|~~|~.)*'" => LITERAL,
+	"[" => EXPRES_START,
+	"]" => EXPRES_END,
+	// Definitions
+	":" => BLUEPRINT,
+	"%" => REGISTER,
+	"!" => CALLBACK,
+	// Callbacks
+	"*" => PARAMETER,
+	">" => ACCESSOR,
+	"<" => DROPPER,
+	// Objects
+	"$" => CHARS,
+	"#" => COUNT,
+	"^" => STATE,
+	"~" => ZIP,
+	"|" => DECK,
+	"@" => MAP,
+}
+
+pub file: Vec<TopLevelItem> = (<WS*>) <mut values:(<top_level> (<WS+>))*> <tvalues:top_level?> => {
+	if let Some(value) = tvalues {
+		values.push(value);
+	}
+	values
+};
+
+top_level: TopLevelItem = {
+	<valuable> => <>.into(),
+	<definition> => <>.into(),
+	<valuable?> DROPPER => TopLevelItem::Dropper(<>),
+};
+
+definition: Definition = {
+	<id:IDENT> BLUEPRINT (<WS*>) <value:expression> => Definition::new_blueprint(id, value),
+	<id:IDENT> REGISTER (<WS*>) <value:valuable> => Definition::new_register(id, value),
+	<id:IDENT> CALLBACK (<WS*>) <args:(<IDENT> PARAMETER (<WS*>))*> <value:expression> => Definition::new_callback(id, args, value),
+};
+
+valuable: Valuable = {
+	object_conversion => <>.into(),
+	object_literal => <>.into(),
+	expression => <>.into(),
+	methodCallback => <>.into(),
+	identifier => <>.into(),
+};
+
+expression: Expression = {
+	EXPRES_START (<WS*>) <mut values:(<top_level> (<WS+>))*> <tvalue:top_level?> EXPRES_END => {
+		if let Some(value) = tvalue {
+			values.push(value);
+		}
+		Expression::new(values)
+	}
+};
+
+identifier: String = {
+	IDENT => <>.to_string(),
+};
+
+methodCallback: MethodCallback = {
+	<target:valuable?> ACCESSOR <id:IDENT> (<WS*>) <args:(<valuable> PARAMETER (<WS*>))*> DROPPER => {
+		MethodCallback::new(target, id, args)
+	}
+};
+
+object_conversion: ObjectConversion = {
+	<valuable> CHARS => ObjectConversion::new_to_chars(<>).into(),
+	<valuable> COUNT => ObjectConversion::new_to_count(<>).into(),
+	<valuable> STATE => ObjectConversion::new_to_state(<>).into(),
+	<valuable> ZIP => ObjectConversion::new_to_zip(<>).into(),
+	<valuable> DECK => ObjectConversion::new_to_deck(<>).into(),
+	<valuable> MAP => ObjectConversion::new_to_map(<>).into(),
+};
+
+object_literal: ObjectLiteral = {
+	<LITERAL?> CHARS => ObjectLiteral::new_chars(<>.unwrap_or_default()),
+	<LITERAL?> COUNT => ObjectLiteral::new_count(<>.unwrap_or_default()),
+	<LITERAL?> STATE => ObjectLiteral::new_state(<>.unwrap_or_default()),
+	<LITERAL?> ZIP => ObjectLiteral::Zip,
+	<LITERAL?> DECK => ObjectLiteral::new_deck(<>.unwrap_or_default()),
+	<LITERAL?> MAP => ObjectLiteral::new_map(<>.unwrap_or_default()),
+};
