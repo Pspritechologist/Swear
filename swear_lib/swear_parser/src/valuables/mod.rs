@@ -6,8 +6,9 @@ use super::*;
 
 pub use expressions::Expression;
 pub use callbacks::MethodCallback;
-pub use objects::{ObjectLiteral, ObjectConversion};
+pub use objects::*;
 
+#[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
 pub enum Valuable {
 	ObjectLiteral(ObjectLiteral),

@@ -3,7 +3,7 @@ use super::*;
 grammar;
 
 match {
-	r"[ \t\n]+" => WS, // Whitespace
+	r"[ \t\n\r]+" => WS, // Whitespace
 	// Flow
 	r";[^\n;]*" => { }, // Comments
 	r"[a-zA-Z0-9_]+" => IDENT,

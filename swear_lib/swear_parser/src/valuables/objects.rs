@@ -1,5 +1,6 @@
 use super::*;
 
+#[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
 pub enum ObjectLiteral {
 	Chars(String),
@@ -20,7 +21,7 @@ impl ObjectLiteral {
 	}
 
 	pub fn new_count(value: &str) -> Self {
-		ObjectLiteral::Count(escape_text(value).parse().unwrap_or(1.))
+		ObjectLiteral::Count(escape_text(value).parse().unwrap_or(1.)) //FIXME
 	}
 
 	pub fn new_zip(_value: &str) -> Self {
@@ -30,18 +31,19 @@ impl ObjectLiteral {
 	pub fn new_deck(value: &str) -> Self {
 		ObjectLiteral::Deck(escape_text(value)
 			.split_ascii_whitespace()
-			.map(ObjectLiteral::new_chars)
+			.map(|s| ObjectLiteral::Chars(s.into()))
 			.collect())
 	}
 
 	pub fn new_map(value: &str) -> Self {
 		ObjectLiteral::Map(escape_text(value)
 			.split_ascii_whitespace()
-			.map(|s| (ObjectLiteral::new_chars(&s), ObjectLiteral::Zip))
+			.map(|s| (ObjectLiteral::Chars(s.into()), ObjectLiteral::Zip))
 			.collect())
 	}
 }
 
+//TODO: Escaping probably shouldn't happen here.
 fn escape_text(text: &str) -> String {
 	if text.len() < 2 {
 		return "".into();
@@ -49,38 +51,70 @@ fn escape_text(text: &str) -> String {
 	text.replace("~", "~~")[1..text.len() - 1].replace("~'", "'")
 }
 
+#[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Clone, Copy)]
+pub enum ObjectSymbol {
+	Chars,
+	State,
+	Count,
+	Zip,
+	Deck,
+	Map,
+}
+
+#[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
-pub enum ObjectConversion {
-	ToChars(Valuable),
-	ToState(Valuable),
-	ToCount(Valuable),
-	ToZip(Valuable),
-	ToDeck(Valuable),
-	ToMap(Valuable),
+pub struct ObjectConversion {
+	pub value: Valuable,
+	pub symbol: ObjectSymbol,
+	// ToChars(Valuable),
+	// ToState(Valuable),
+	// ToCount(Valuable),
+	// ToZip(Valuable),
+	// ToDeck(Valuable),
+	// ToMap(Valuable),
 }
 
 impl ObjectConversion {
 	pub fn new_to_chars(value: Valuable) -> Self {
-		ObjectConversion::ToChars(value)
+		ObjectConversion {
+			value,
+			symbol: ObjectSymbol::Chars,
+		}
 	}
 
 	pub fn new_to_state(value: Valuable) -> Self {
-		ObjectConversion::ToState(value)
+		ObjectConversion {
+			value,
+			symbol: ObjectSymbol::State,
+		}
 	}
 
 	pub fn new_to_count(value: Valuable) -> Self {
-		ObjectConversion::ToCount(value)
+		ObjectConversion {
+			value,
+			symbol: ObjectSymbol::Count,
+		}
 	}
 
 	pub fn new_to_zip(value: Valuable) -> Self {
-		ObjectConversion::ToZip(value)
+		ObjectConversion {
+			value,
+			symbol: ObjectSymbol::Zip,
+		}
 	}
 
 	pub fn new_to_deck(value: Valuable) -> Self {
-		ObjectConversion::ToDeck(value)
+		ObjectConversion {
+			value,
+			symbol: ObjectSymbol::Deck,
+		}
 	}
 
 	pub fn new_to_map(value: Valuable) -> Self {
-		ObjectConversion::ToMap(value)
+		ObjectConversion {
+			value,
+			symbol: ObjectSymbol::Map,
+		}
 	}
 }

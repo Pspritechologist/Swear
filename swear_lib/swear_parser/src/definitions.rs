@@ -1,7 +1,6 @@
-use std::fmt::Display;
-
 use super::*;
 
+#[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
 pub enum Definition {
 	Blueprint {

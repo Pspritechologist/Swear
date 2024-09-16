@@ -1,5 +1,6 @@
 use super::*;
 
+#[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
 pub struct MethodCallback {
 	pub target: Box<Option<Valuable>>,

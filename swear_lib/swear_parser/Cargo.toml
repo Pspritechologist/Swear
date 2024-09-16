@@ -1,14 +1,26 @@
+cargo-features = [ "edition2024" ]
+
 [package]
 name = "swear_parser"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [build-dependencies]
-lalrpop = "0.20.2"
+lalrpop = "*"
 
 [dependencies]
-enum_dispatch = "0.3.13"
-lalrpop-util = { version = "0.20.2", features = [ "lexer" ] }
+enum_dispatch = "*"
+lalrpop-util = { version = "*", features = [ "lexer" ], optional = true}
+serde = { version = "*", features = [ "derive" ], optional = true }
+
+[dev-dependencies]
+ron = "*"
+bitcode = { version = "*", features = [ "serde" ] }
 
 [build]
 target-dir = "../../target"
+
+[features]
+default = [ "parser" ]
+serde = [ "dep:serde" ]
+parser = [ "dep:lalrpop-util" ]
