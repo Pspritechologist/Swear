@@ -1,15 +1,24 @@
+cargo-features = [ "edition2024" ]
+
 [package]
 name = "swear_lib"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
-enum_dispatch = "0.3.13"
-fastrand = "2.1.0"
-swear_parser = { path = "swear_parser" }
-# swear_lib_macros = { path = "swear_lib_macros"}
-lalrpop-util = "0.20.2"
-dyn-clone = "1.0.17"
+enum_dispatch = "*"
+rand = "*"
+swear_parser = { path = "swear_parser", default-features = false }
+# swear_lib_macros = { path = "swear_lib_macros", optional = true }
+dashu-float = { version = "*", features = [ "rand" ] }
+serde = { version = "*", features = [ "derive" ], optional = true }
+
+[features]
+default = [ "runtime", "parser" ]
+serde = [ "dep:serde", "swear_parser/serde", "dashu-float/serde" ]
+parser = [ "swear_parser/parser" ]
+objects = [ ]
+runtime = [ "objects" ]
 
 [build]
 target-dir = "../target"

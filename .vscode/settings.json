@@ -12,4 +12,5 @@
     "files.associations": {
         "*.sw": "",
     },
+    "rust-analyzer.cargo.features": "all",
 }

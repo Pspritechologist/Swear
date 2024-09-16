@@ -1,7 +1,16 @@
+cargo-features = [ "edition2024" ]
+
 [package]
 name = "swear"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
-swear_lib = { version = "0.1.0", path = "swear_lib" }
+swear_lib = { path = "swear_lib" }
+# swear_parser = { path = "swear_lib/swear_parser", features = [ "serde" ]}
+# ron = "*"
+# serde_json = "*"
+# toml = "*"
+
+[features]
+serde = [ "swear_lib/serde" ]

@@ -1,14 +1,20 @@
+use swear_lib::runtime::SwearRuntime;
+
 fn main() {
-	let script = match swear_lib::swear_parser::SwearParser::new().parse(include_str!("../testing_script.sw")) {
+	let time = std::time::Instant::now();
+	let parser = swear_lib::swear_parser::SwearParser::new();
+	// println!("Time to create parser: {:?}", time.elapsed());
+	let time = std::time::Instant::now();
+	let script = match parser.parse(include_str!("../testing_script.sw")) {
 		Ok(result) => result,
 		Err(e) => {
 			eprintln!("{e}");
 			return;
 		}
 	};
+	// println!("Time to parse: {:?}", time.elapsed());
 
-	let mut cont = swear_lib::context::RootContext::new();
-	let result = swear_lib::execute_expression(script, &mut cont);
-
-	println!("{:?}", result);
+	// dbg!(&script);
+	let mut runtime = swear_lib::runtime::ContextStack::new(script);
+	while let Some(_) = runtime.step() {}
 }
