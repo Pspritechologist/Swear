@@ -2,7 +2,7 @@ use std::hash::Hash;
 
 use super::*;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct ObjectRef {
 	inner: Arc<RwLock<Object>>,
 }
@@ -56,5 +56,28 @@ impl Deref for ObjectRef {
 impl DerefMut for ObjectRef {
 	fn deref_mut(&mut self) -> &mut Self::Target {
 		&mut self.inner
+	}
+}
+
+impl Context for ObjectRef {
+	fn get(&self, key: &str) -> Option<ContextItem> {
+		let lock = self.read().unwrap();
+		match lock.deref() {
+			Object::Dynamic(obj) => obj.get(key).clone(),
+			other => {
+				dbg!(other);
+				None
+			},
+		}
+	}
+
+	fn set(&mut self, key: String, value: ContextItem) {
+		let mut lock = self.write().unwrap();
+		match lock.deref_mut() {
+			Object::Dynamic(obj) => obj.set(key, value),
+			other => {
+				dbg!(other);
+			},
+		}
 	}
 }

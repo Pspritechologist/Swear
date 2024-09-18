@@ -1,39 +1,36 @@
 use super::*;
 
 #[derive(Clone, Default, PartialEq, Eq)]
+#[swear_object]
 pub struct State {
 	pub state: bool,
 }
 
-impl IObject for State {
-	fn to_chars(&self) -> Chars {
+impl State {
+	fn to_swear_chars(&self) -> Chars {
 		match self.state {
 			true => "positive",
 			false => "negative",
 		}.into()
 	}
 
-	fn to_count(&self) -> Count {
+	fn to_swear_count(&self) -> Count {
 		match self.state {
 			true => 1,
 			false => 0,
 		}.into()
 	}
 
-	fn to_state(&self) -> State {
+	fn to_swear_state(&self) -> State {
 		self.clone()
 	}
 
-	fn to_deck(&self) -> Deck {
+	fn to_swear_deck(&self) -> Deck {
 		Deck::from(vec![Object::from(self.clone())])
 	}
 
-	fn to_map(&self) -> Map {
+	fn to_swear_map(&self) -> Map {
 		Map::from(vec![(Object::from(Chars::from("state")), Object::from(self.clone()))])
-	}
-
-	fn object_name(&self) -> &str {
-		"State"
 	}
 }
 

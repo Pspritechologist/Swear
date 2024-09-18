@@ -1,3 +1,5 @@
+#![feature(fn_traits, let_chains)]
+
 pub mod object;
 pub mod context;
 pub mod runtime;

@@ -1,4 +1,4 @@
-use swear_parser::{ObjectLiteral, ObjectSymbol, TopLevelItem};
+use swear_parser::{Expression, ObjectLiteral, ObjectSymbol, TopLevelItem};
 
 #[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug)]
@@ -7,13 +7,21 @@ pub enum Operations {
 	ConvertObject(ObjectSymbol),
 	PushIdentifier(String),
 	RegisterObject(String),
-	RegisterCallback(String),
-	RegisterBlueprint(String),
-	CallCallback {
+	RegisterCallback {
+		ident: String,
+		parameters: Vec<String>,
+		expr: Expression,
+	},
+	RegisterBlueprint {
+		ident: String,
+		expr: Expression,
+	},
+	ExCallback {
 		method: bool,
 		callback: String,
 		parameters: usize,
 	},
-	PushContext(Vec<TopLevelItem>),
+	PushContext(Expression),
 	PopContext,
+	ConstructDynamicObject,
 }

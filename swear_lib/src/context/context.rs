@@ -1,52 +1,47 @@
 use crate::runtime::operations::Operations;
 
 use super::*;
+use enum_dispatch::enum_dispatch;
 use swear_parser::TopLevelItem;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum ContextItem {
-	Object(ObjectRef),
-	Callback(),
-	Blueprint(),
+// #[derive(Debug)]
+#[enum_dispatch(Context)]
+pub enum ContextHolder {
+	ContextLevel,
+	ObjectRef,
 }
 
+#[enum_dispatch]
 pub trait Context {
-	fn get(&self, key: &str) -> Option<ObjectRef>;
-	fn set(&mut self, key: String, value: ObjectRef);
+	fn get(&self, key: &str) -> Option<ContextItem>;
+	fn set(&mut self, key: String, value: ContextItem);
 }
 
 #[derive(Debug, Default)]
 pub struct ContextLevel {
 	pub items: std::collections::HashMap<String, ContextItem>,
-	pub instructions: Vec<TopLevelItem>,
+	pub instructions: Expression,
 	pub instr_index: usize,
 	pub ops: Vec<Operations>,
-	pub table: Vec<ObjectRef>,
 }
 
 impl ContextLevel {
-	pub fn new(instructions: Vec<TopLevelItem>) -> Self {
+	pub fn new(instructions: Expression) -> Self {
 		Self {
 			items: std::collections::HashMap::new(),
 			instructions,
 			instr_index: 0,
 			ops: Vec::new(),
-			table: Vec::new(),
 		}
 	}
 }
 
 impl Context for ContextLevel {
-	fn get(&self, key: &str) -> Option<ObjectRef> {
-		match self.items.get(key) {
-			Some(ContextItem::Object(object)) => Some(object.clone()),
-			Some(ContextItem::Callback()) => unimplemented!("Callback"),
-			Some(ContextItem::Blueprint()) => unimplemented!("Blueprint"),
-			None => None,
-		}
+	fn get(&self, key: &str) -> Option<ContextItem> {
+		self.items.get(key).cloned()
 	}
 
-	fn set(&mut self, key: String, value: ObjectRef) {
-		self.items.insert(key, ContextItem::Object(value));
+	fn set(&mut self, key: String, value: ContextItem) {
+		self.items.insert(key, value);
 	}
 }

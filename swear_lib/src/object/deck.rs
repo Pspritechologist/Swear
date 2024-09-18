@@ -3,6 +3,7 @@ use crate::runtime::ObjectRef;
 use super::*;
 
 #[derive(Clone, Default, PartialEq, Eq)]
+#[swear_object]
 pub struct Deck {
 	pub deck: Vec<ObjectRef>,
 }
@@ -21,8 +22,8 @@ impl Deck {
 	}
 }
 
-impl IObject for Deck {
-	fn to_chars(&self) -> Chars {
+impl Deck {
+	fn to_swear_chars(&self) -> Chars {
 		let mut chars = String::with_capacity(self.deck.len() * 4);
 		for s in self.deck.iter().map(|o| o.read().unwrap().to_chars().chars) {
 			chars.push_str(&s);
@@ -32,28 +33,24 @@ impl IObject for Deck {
 		chars.into()
 	}
 
-	fn to_count(&self) -> Count {
+	fn to_swear_count(&self) -> Count {
 		self.deck.len().into()
 	}
 
-	fn to_state(&self) -> State {
+	fn to_swear_state(&self) -> State {
 		(!self.deck.is_empty()).into()
 	}
 
-	fn to_deck(&self) -> Deck {
+	fn to_swear_deck(&self) -> Deck {
 		self.clone()
 	}
 
-	fn to_map(&self) -> Map {
+	fn to_swear_map(&self) -> Map {
 		Map::from(self.deck
 			.iter()
 			.enumerate()
 			.map(|(i, o)| (Count::from(i).into(), o.clone()))
 			.collect::<Vec<(Object, _)>>())
-	}
-
-	fn object_name(&self) -> &str {
-		"Deck"
 	}
 }
 

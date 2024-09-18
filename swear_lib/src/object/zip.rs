@@ -1,6 +1,11 @@
+use std::{ops::Deref, sync::LazyLock};
+
 use super::*;
 
+static DATA: LazyLock<Mutex<Vec<f64>>> = LazyLock::new(|| Mutex::new(Vec::new()));
+
 #[derive(Clone, Default, PartialEq, Eq)]
+// #[swear_object]
 pub struct Zip;
 
 impl IObject for Zip {
@@ -16,10 +21,6 @@ impl IObject for Zip {
 		State::default()
 	}
 
-	fn to_zip(&self) -> Zip {
-		self.clone()
-	}
-
 	fn to_deck(&self) -> Deck {
 		Deck::default()
 	}
@@ -32,8 +33,9 @@ impl IObject for Zip {
 		true
 	}
 
-	fn object_name(&self) -> &str {
-		"Zip"
+	fn get_info(&self) -> ObjectInfo {
+		ObjectInfo::from_str("Zip")
+			.with_description_str("An Object that represents nothing. Nada. Zilch.")
 	}
 }
 

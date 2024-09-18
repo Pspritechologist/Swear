@@ -2,10 +2,12 @@ use crate::{context::{self, ContextItem}, runtime::ObjectRef};
 
 use super::*;
 
-#[derive(Clone, Default, PartialEq, Eq)]
+#[derive(Default)]
 pub struct Dynamic {
-	def_name: String,
+	name: String,
+	description: Option<String>,
 	contents: std::collections::HashMap<String, ContextItem>,
+	// functions: std::collections::HashMap<String, FunctionInfo>,
 }
 
 impl IObject for Dynamic {
@@ -33,23 +35,23 @@ impl IObject for Dynamic {
 		true
 	}
 
-	fn object_name(&self) -> &str {
-		self.def_name.as_str()
+	fn get_info(&self) -> ObjectInfo {
+		ObjectInfo::from_str(&self.name)
+			.with_description(self.description.clone())
 	}
+
+	// fn get_functions(&self) -> HashMap<String, FunctionInfo> {
+	// 	self.functions
+	// }
 }
 
 impl context::Context for Dynamic {
-	fn get(&self, key: &str) -> Option<ObjectRef> {
-		match self.contents.get(key) {
-			Some(ContextItem::Object(object)) => Some(object.clone()),
-			Some(ContextItem::Callback()) => unimplemented!("Callback"),
-			Some(ContextItem::Blueprint()) => unimplemented!("Blueprint"),
-			None => None,
-		}
+	fn get(&self, key: &str) -> Option<ContextItem> {
+		self.contents.get(key).cloned()
 	}
 
-	fn set(&mut self, key: String, value: ObjectRef) {
-		self.contents.insert(key, ContextItem::Object(value));
+	fn set(&mut self, key: String, value: ContextItem) {
+		self.contents.insert(key, value);
 	}
 }
 

@@ -602,7 +602,17 @@ dependencies = [
  "enum_dispatch",
  "rand",
  "serde",
+ "swear_lib_macros",
  "swear_parser",
+]
+
+[[package]]
+name = "swear_lib_macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

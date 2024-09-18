@@ -3,6 +3,7 @@ use crate::runtime::ObjectRef;
 use super::*;
 
 #[derive(Clone, Default, PartialEq, Eq)]
+#[swear_object]
 pub struct Map {
 	pub map: Vec<(ObjectRef, ObjectRef)>,
 }
@@ -21,8 +22,8 @@ impl Map {
 	}
 }
 
-impl IObject for Map {
-	fn to_chars(&self) -> Chars {
+impl Map {
+	fn to_swear_chars(&self) -> Chars {
 		let mut chars = String::new();
 		let last = self.map.last();
 
@@ -44,24 +45,20 @@ impl IObject for Map {
 		chars.into()
 	}
 
-	fn to_count(&self) -> Count {
+	fn to_swear_count(&self) -> Count {
 		self.map.len().into()
 	}
 
-	fn to_state(&self) -> State {
+	fn to_swear_state(&self) -> State {
 		(!self.map.is_empty()).into()
 	}
 
-	fn to_deck(&self) -> Deck {
+	fn to_swear_deck(&self) -> Deck {
 		Deck::default()	
 	}
 
-	fn to_map(&self) -> Map {
+	fn to_swear_map(&self) -> Map {
 		self.clone()
-	}
-
-	fn object_name(&self) ->  &str {
-		"Map"
 	}
 }
 

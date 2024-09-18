@@ -9,7 +9,7 @@ edition = "2024"
 enum_dispatch = "*"
 rand = "*"
 swear_parser = { path = "swear_parser", default-features = false }
-# swear_lib_macros = { path = "swear_lib_macros", optional = true }
+swear_lib_macros = { path = "swear_lib_macros", optional = false }
 dashu-float = { version = "*", features = [ "rand" ] }
 serde = { version = "*", features = [ "derive" ], optional = true }
 

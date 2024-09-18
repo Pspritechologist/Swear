@@ -1,24 +1,25 @@
 use super::*;
 
 #[derive(Clone, Default, PartialEq, Eq)]
+#[swear_object]
 pub struct Count {
 	pub count: crate::BigNum,
 }
 
-impl IObject for Count {
-	fn to_chars(&self) -> Chars {
+impl Count {
+	fn to_swear_chars(&self) -> Chars {
 		Chars { chars: self.count.to_string() }
 	}
 
-	fn to_count(&self) -> Count {
+	fn to_swear_count(&self) -> Count {
 		self.clone()
 	}
 
-	fn to_state(&self) -> State {
+	fn to_swear_state(&self) -> State {
 		State { state: self.count > crate::BigNum::ONE }
 	}
 
-	fn to_deck(&self) -> Deck {
+	fn to_swear_deck(&self) -> Deck {
 		let mut i = self.count.clone();
 		let mut deck = vec![];
 		while i != crate::BigNum::ZERO {
@@ -29,12 +30,8 @@ impl IObject for Count {
 		Deck { deck }
 	}
 
-	fn to_map(&self) -> Map {
+	fn to_swear_map(&self) -> Map {
 		Map::default()
-	}
-
-	fn object_name(&self) -> &str {
-		"Count"
 	}
 }
 

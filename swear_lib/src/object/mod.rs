@@ -6,6 +6,8 @@ mod deck;
 mod map;
 mod dynamic;
 
+use std::{collections::HashMap, sync::{Arc, Mutex}};
+
 pub use chars::*;
 pub use count::*;
 pub use state::*;
@@ -14,13 +16,16 @@ pub use deck::*;
 pub use map::*;
 pub use dynamic::*;
 
+pub type ObjectFunction = dyn FnMut(ObjectRef, Vec<ObjectRef>) -> Result<Option<ObjectRef>, ()>;
+
 use enum_dispatch::enum_dispatch;
 use swear_parser::ObjectLiteral;
+use swear_lib_macros::swear_object;
 
-use crate::context::ObjectRef;
+use crate::context::{Callback, NativeCallback, ObjectRef};
 
 #[enum_dispatch]
-#[derive(Clone, PartialEq, Eq)]
+// #[derive(Clone)]
 pub enum Object {
 	Chars,
 	Count,
@@ -30,6 +35,22 @@ pub enum Object {
 	Map,
 	Dynamic,
 }
+
+impl PartialEq for Object {
+	fn eq(&self, other: &Self) -> bool {
+		match (self, other) {
+			(Object::Chars(a), Object::Chars(b)) => a == b,
+			(Object::Count(a), Object::Count(b)) => a == b,
+			(Object::State(a), Object::State(b)) => a == b,
+			(Object::Zip(a), Object::Zip(b)) => a == b,
+			(Object::Deck(a), Object::Deck(b)) => a == b,
+			(Object::Map(a), Object::Map(b)) => a == b,
+			(Object::Dynamic(_), Object::Dynamic(_)) => false,
+			_ => false,
+		}
+	}
+}
+impl Eq for Object {}
 
 impl Object {
 	pub fn from_literal(literal: ObjectLiteral) -> Self {
@@ -88,14 +109,56 @@ pub trait IObject {
 		false
 	}
 
-	fn object_name(&self) -> &str;
+	fn get_info(&self) -> ObjectInfo;
+
+	fn get_functions(&self) -> HashMap<String, FunctionInfo> {
+		HashMap::new()
+	}
+}
+
+#[non_exhaustive]
+#[derive(Clone, Debug)]
+pub struct ObjectInfo {
+	pub name: String,
+	pub description: Option<String>,
+}
+
+impl ObjectInfo {
+	pub fn from_str(name: &str) -> Self {
+		Self {
+			name: name.into(),
+			description: None,
+		}
+	}
+
+	pub fn from_string(name: String) -> Self {
+		Self {
+			name,
+			description: None,
+		}
+	}
+
+	pub fn with_description_str(mut self, description: &str) -> Self {
+		self.description = Some(description.into());
+		self
+	}
+
+	pub fn with_description_string(mut self, description: String) -> Self {
+		self.description = Some(description);
+		self
+	}
+
+	pub fn with_description(mut self, description: Option<String>) -> Self {
+		self.description = description;
+		self
+	}
 }
 
 #[non_exhaustive]
 pub struct FunctionInfo {
 	pub name: String,
 	pub arg_count: usize,
-	pub function: Box<dyn FnMut(ObjectRef, Vec<ObjectRef>) -> Option<ObjectRef>>,
+	pub function: Callback,
 }
 
 pub struct FunctionInfoBuilder {
@@ -116,11 +179,14 @@ impl FunctionInfoBuilder {
 		self
 	}
 
-	pub fn build(self, function: Box<dyn FnMut(ObjectRef, Vec<ObjectRef>) -> Option<ObjectRef>>) -> FunctionInfo {
+	pub fn build(self, function: Arc<Mutex<ObjectFunction>>) -> FunctionInfo {
 		FunctionInfo {
 			name: self.name,
 			arg_count: self.arg_count,
-			function,
+			function: NativeCallback {
+				arg_count: self.arg_count,
+				callback: function,
+			}.into(),
 		}
 	}
 }
