@@ -1,8 +1,11 @@
-use std::fmt::Debug;
+use std::{env::current_exe, fmt::Debug};
+
+use crate::dyn_libraries;
 
 use super::*;
 
 /// An object that represents a collection of zero or more unicode characters.
+#[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Default, PartialEq, Eq)]
 #[swear_object]
 pub struct Chars {
@@ -36,19 +39,19 @@ impl Chars {
 		// Scribe function.
 		// Prints the characters to the console.
 		functions.insert("scribe".to_string(), FunctionInfoBuilder::new("scribe".to_string()).build(Arc::new(Mutex::new(|obj: ObjectRef, _| {
-			let lock = obj.read().unwrap();
-			println!("{:?}", lock.to_chars().chars);
+			let lock = obj.access();
+			println!("{}", lock.to_chars().chars);
 			Ok(None)
 		}))));
 
 		// Concat function.
 		// Takes any number of arguments and concatenates them into a single string separated by the method target.
 		functions.insert("concat".to_string(), FunctionInfoBuilder::new("concat".to_string()).build(Arc::new(Mutex::new(|obj: ObjectRef, args: Vec<ObjectRef>| {
-			let target = obj.read().unwrap();
+			let target = obj.access();
 			let mut result = String::new();
 			let mut iter = args.iter();
 			while let Some(obj) = iter.next() {
-				let lock = obj.read().unwrap();
+				let lock = obj.access();
 				result.push_str(&lock.to_chars().chars);
 				if iter.len() > 0 {
 					result.push_str(&target.to_chars().chars);
@@ -61,8 +64,17 @@ impl Chars {
 		// Size function.
 		// Returns the number of characters in the string.
 		functions.insert("size".to_string(), FunctionInfoBuilder::new("size".to_string()).build(Arc::new(Mutex::new(|obj: ObjectRef, _| {
-			let lock = obj.read().unwrap();
+			let lock = obj.access();
 			Ok(Some(Object::from(Count::from(crate::BigNum::from(lock.to_chars().chars.len()))).into()))
+		}))));
+
+		functions.insert("load".to_string(), FunctionInfoBuilder::new("load".to_string()).build(Arc::new(Mutex::new(|obj: ObjectRef, _| {
+			//TODO: Customize lib loading.
+			let lock = obj.access();
+			dyn_libraries::load_library(
+				// &current_exe().unwrap().with_file_name(&lock.to_chars().chars).with_extension("slur") //? Non-debug.
+				&current_exe().unwrap().with_file_name(format!("libswear_{}", &lock.to_chars().chars)).with_extension("so")
+			).map(|o| Some(o)).map_err(|_| eprintln!("Failed to load library!"))
 		}))));
 
 		functions

@@ -1,9 +1,6 @@
-use std::{ops::Deref, sync::LazyLock};
-
 use super::*;
 
-static DATA: LazyLock<Mutex<Vec<f64>>> = LazyLock::new(|| Mutex::new(Vec::new()));
-
+#[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Default, PartialEq, Eq)]
 // #[swear_object]
 pub struct Zip;

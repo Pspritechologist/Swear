@@ -1,5 +1,6 @@
 use super::*;
 
+#[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Default, PartialEq, Eq)]
 #[swear_object]
 pub struct Count {
@@ -8,7 +9,7 @@ pub struct Count {
 
 impl Count {
 	fn to_swear_chars(&self) -> Chars {
-		Chars { chars: self.count.to_string() }
+		Chars { chars: self.count.clone().with_base_and_precision::<10>(10).value().to_string() }
 	}
 
 	fn to_swear_count(&self) -> Count {

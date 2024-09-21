@@ -1,4 +1,4 @@
-use swear_parser::{Expression, ObjectLiteral, ObjectSymbol, TopLevelItem};
+use swear_parser::{Expression, ObjectLiteral, ObjectSymbol};
 
 #[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug)]

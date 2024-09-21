@@ -1,5 +1,6 @@
 use super::*;
 
+#[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Default, PartialEq, Eq)]
 #[swear_object]
 pub struct State {

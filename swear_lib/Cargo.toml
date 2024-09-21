@@ -13,6 +13,8 @@ swear_lib_macros = { path = "swear_lib_macros", optional = false }
 dashu-float = { version = "*", features = [ "rand" ] }
 serde = { version = "*", features = [ "derive" ], optional = true }
 
+libloading = { version = "*" }
+
 [features]
 default = [ "runtime", "parser" ]
 serde = [ "dep:serde", "swear_parser/serde", "dashu-float/serde" ]

@@ -8,6 +8,7 @@ use swear_parser::Expression;
 use crate::object::*;
 use std::{fmt::Debug, ops::{Deref, DerefMut}, sync::{Arc, Mutex, RwLock}};
 
+#[repr(C)] //? Used in Dynamic libraries.
 #[derive(Debug, Clone)]
 pub enum ContextItem {
 	Object(ObjectRef),
@@ -30,6 +31,7 @@ impl From<Blueprint> for ContextItem {
 	}
 }
 
+#[repr(C)] //? Used in Dynamic libraries.
 #[derive(Debug, Clone)]
 pub enum Callback {
 	Swear(SwearCallback),
@@ -53,6 +55,7 @@ pub struct SwearCallback {
 	pub callback: Expression,
 }
 
+#[repr(C)] //? Used in Dynamic libraries.
 #[derive(Clone)]
 pub struct NativeCallback {
 	pub arg_count: usize,

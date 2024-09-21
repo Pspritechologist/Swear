@@ -59,7 +59,7 @@ impl SwearRuntime for ContextStack {
 			},
 			Operations::ConvertObject(symbol) => {
 				let object = self.table_mut().pop().expect("FIXME");
-				let object = object.read().unwrap();
+				let object = object.access();
 				self.table_mut().push(match symbol {
 					ObjectSymbol::Chars => Object::from(object.to_chars()).into(),
 					ObjectSymbol::Count => Object::from(object.to_count()).into(),
@@ -78,7 +78,7 @@ impl SwearRuntime for ContextStack {
 					},
 					Some(ContextItem::Callback(callback)) => {
 						match callback {
-							Callback::Native(NativeCallback { arg_count, callback }) => {
+							Callback::Native(NativeCallback { arg_count: _, callback: _ }) => {
 								// let mut args = Vec::with_capacity(arg_count);
 								// for _ in 0..arg_count {
 								// 	args.push(Object::default().into()); //FIXME: Arg count.
@@ -86,7 +86,7 @@ impl SwearRuntime for ContextStack {
 		
 								// let result = callback.lock().unwrap().call_mut((None, args)).ok().flatten().unwrap_or_default(); //TODO: Error handling.
 								// self.table_mut().push(result);
-								panic!("Called non-method native function");
+								unreachable!("Called non-method native function"); //? Swear does not have native functions.
 							},
 							Callback::Swear(SwearCallback { args, callback }) => {
 								self.push(ContextLevel::new(callback.clone()));
@@ -96,7 +96,7 @@ impl SwearRuntime for ContextStack {
 							}
 						}
 					},
-					Some(ContextItem::Blueprint(blueprint)) => {
+					Some(ContextItem::Blueprint(_blueprint)) => {
 						// self.push(ContextLevel::new(blueprint.callback.clone()));
 						todo!()
 					},
@@ -107,7 +107,7 @@ impl SwearRuntime for ContextStack {
 			Operations::ExCallback { method, callback, parameters } => {
 				let (obj, Some(callback)) = (if method {
 					let objref = self.table_mut().pop().unwrap();
-					let obj = objref.read().unwrap();
+					let obj = objref.access();
 					let func = obj.get_functions().get(&callback).map(|info| info.function.clone());
 					drop(obj);
 					(Some(objref), func)
@@ -169,7 +169,7 @@ impl SwearRuntime for ContextStack {
 					callback: expr,
 				}).into());
 			},
-			Operations::RegisterBlueprint { ident, expr } => {
+			Operations::RegisterBlueprint { ident: _, expr: _ } => {
 				// self.set(ident, Blueprint::from(expr).into());
 				todo!()
 			},
@@ -199,7 +199,7 @@ impl ContextStack {
 
 	fn derive_operations_definition(&mut self, definition: &Definition) {
 		match definition {
-			Definition::Blueprint { name, exprs } => {
+			Definition::Blueprint { name: _, exprs: _ } => {
 				todo!();
 				// self.ops_mut().push(Operations::RegisterBlueprint {
 				// 	ident: name.clone(),
@@ -281,9 +281,9 @@ impl ContextStack {
 		}
 	}
 
-	fn cont(&self) -> &ContextHolder {
-		self.stack.last().unwrap()
-	}
+	// fn cont(&self) -> &ContextHolder {
+	// 	self.stack.last().unwrap()
+	// }
 
 	fn cont_mut(&mut self) -> &mut ContextHolder {
 		self.stack.last_mut().unwrap()
@@ -315,9 +315,9 @@ impl ContextStack {
 		&mut self.cont_level_mut().ops
 	}
 
-	fn table(&self) -> &Vec<ObjectRef> {
-		&self.table
-	}
+	// fn table(&self) -> &Vec<ObjectRef> {
+	// 	&self.table
+	// }
 
 	fn table_mut(&mut self) -> &mut Vec<ObjectRef> {
 		&mut self.table

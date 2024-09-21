@@ -155,6 +155,7 @@ impl ObjectInfo {
 }
 
 #[non_exhaustive]
+#[derive(Clone, Debug)]
 pub struct FunctionInfo {
 	pub name: String,
 	pub arg_count: usize,
@@ -187,6 +188,38 @@ impl FunctionInfoBuilder {
 				arg_count: self.arg_count,
 				callback: function,
 			}.into(),
+		}
+	}
+}
+
+#[cfg(feature="serde")]
+mod serde_impl {
+	use super::*;
+
+	impl serde::Serialize for Object {
+		fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+		where
+			S: serde::Serializer,
+		{
+			match self {
+				Object::Chars(c) => c.serialize(serializer),
+				Object::Count(c) => c.serialize(serializer),
+				Object::State(s) => s.serialize(serializer),
+				Object::Zip(z) => z.serialize(serializer),
+				Object::Deck(d) => d.serialize(serializer),
+				Object::Map(m) => m.serialize(serializer),
+				Object::Dynamic(d) => d.serialize(serializer),
+			}
+		}
+	}
+
+	impl<'de> serde::Deserialize<'de> for Object {
+		fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+		where
+			D: serde::Deserializer<'de>,
+		{
+			let value = ObjectLiteral::deserialize(deserializer)?;
+			Ok(Object::from_literal(value))
 		}
 	}
 }

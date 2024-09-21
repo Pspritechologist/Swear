@@ -2,6 +2,7 @@ use crate::runtime::ObjectRef;
 
 use super::*;
 
+#[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Default, PartialEq, Eq)]
 #[swear_object]
 pub struct Map {
@@ -25,23 +26,15 @@ impl Map {
 impl Map {
 	fn to_swear_chars(&self) -> Chars {
 		let mut chars = String::new();
-		let last = self.map.last();
 
-		fn item(dest: &mut String, k: &ObjectRef, v: &ObjectRef) {
-			dest.push_str(&k.read().unwrap().to_chars().chars); //FIXME Use to_string()
-			dest.push_str(": ");
-			dest.push_str(&v.read().unwrap().to_chars().chars); //FIXME Use to_string()
+		let mut iter = self.map.iter();
+		while let Some((k, v)) = iter.next() {
+			chars.push_str(&v.access().to_chars().chars); //FIXME Use to_string()
+			chars.push('@');
+			chars.push_str(&k.access().to_chars().chars); //FIXME Use to_string()
+			chars.push('\n'); //? Attempts to remove this trailing new line have failed.
 		}
 
-		chars.push('{');
-		for (k, v) in self.map.iter().take(self.map.len() - 1) {
-			item(&mut chars, k, v);
-			chars.push_str(", ");
-		}
-		if let Some((k, v)) = last {
-			item(&mut chars, k, v);
-		}
-		chars.push('}');
 		chars.into()
 	}
 

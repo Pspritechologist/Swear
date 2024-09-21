@@ -27,11 +27,11 @@ match {
 	"@" => MAP,
 }
 
-pub file: Vec<TopLevelItem> = (<WS*>) <mut values:(<top_level> (<WS+>))*> <tvalues:top_level?> => {
+pub file: Expression = (<WS*>) <mut values:(<top_level> (<WS+>))*> <tvalues:top_level?> => {
 	if let Some(value) = tvalues {
 		values.push(value);
 	}
-	values
+	values.into()
 };
 
 top_level: TopLevelItem = {

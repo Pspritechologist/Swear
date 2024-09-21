@@ -1,13 +1,24 @@
-use crate::{context::{self, ContextItem}, runtime::ObjectRef};
+use crate::context::{self, ContextItem};
 
 use super::*;
 
 #[derive(Default)]
+#[repr(C)] //? The main point of this is to allow adding new fields without breaking ABI.
+#[non_exhaustive]
 pub struct Dynamic {
 	name: String,
 	description: Option<String>,
 	contents: std::collections::HashMap<String, ContextItem>,
-	// functions: std::collections::HashMap<String, FunctionInfo>,
+	//? It's very important we ensure whatever library this Object
+	//? interacts with remains loaded until the Object no longer exists.
+	#[allow(unused)]
+	pub(crate) src_lib: Option<Arc<libloading::Library>>,
+}
+
+impl Dynamic {
+	pub fn add_function(&mut self, info: FunctionInfo) {
+		self.contents.insert(info.name, info.function.into());
+	}
 }
 
 impl IObject for Dynamic {
@@ -40,9 +51,14 @@ impl IObject for Dynamic {
 			.with_description(self.description.clone())
 	}
 
-	// fn get_functions(&self) -> HashMap<String, FunctionInfo> {
-	// 	self.functions
-	// }
+	fn get_functions(&self) -> HashMap<String, FunctionInfo> {
+		self.contents.iter().filter_map(|(key, value)| match value {
+			ContextItem::Callback(Callback::Native(NativeCallback { callback, .. })) => {
+				Some((key.clone(), FunctionInfoBuilder::new(key.clone()).build(callback.clone())))
+			},
+			_ => None,
+		}).collect()
+	}
 }
 
 impl context::Context for Dynamic {
@@ -58,5 +74,25 @@ impl context::Context for Dynamic {
 impl std::fmt::Debug for Dynamic {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		write!(f, "Dynamic({:?})", self.contents)
+	}
+}
+
+#[cfg(feature="serde")]
+mod serde_impl {
+	// Simply write a 'Zip' instead.
+	// Read as a blank Dynamic object.
+	use super::*;
+	use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+	impl Serialize for Dynamic {
+		fn serialize<S: Serializer>(&self, _serializer: S) -> Result<S::Ok, S::Error> {
+			_serializer.serialize_unit()
+		}
+	}
+
+	impl<'de> Deserialize<'de> for Dynamic {
+		fn deserialize<D: Deserializer<'de>>(_deserializer: D) -> Result<Self, D::Error> {
+			Ok(Dynamic::default())
+		}
 	}
 }

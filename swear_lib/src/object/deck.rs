@@ -2,6 +2,7 @@ use crate::runtime::ObjectRef;
 
 use super::*;
 
+#[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Default, PartialEq, Eq)]
 #[swear_object]
 pub struct Deck {
@@ -25,7 +26,7 @@ impl Deck {
 impl Deck {
 	fn to_swear_chars(&self) -> Chars {
 		let mut chars = String::with_capacity(self.deck.len() * 4);
-		for s in self.deck.iter().map(|o| o.read().unwrap().to_chars().chars) {
+		for s in self.deck.iter().map(|o| o.access().to_chars().chars) {
 			chars.push_str(&s);
 			chars.push(' ');
 		}
@@ -58,7 +59,7 @@ impl std::fmt::Debug for Deck {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		let mut debug = f.debug_list();
 		for o in self.deck.iter() {
-			debug.entry(&o.read().unwrap());
+			debug.entry(&o.access());
 		}
 		debug.finish()
 	}

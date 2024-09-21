@@ -2,7 +2,6 @@ use crate::runtime::operations::Operations;
 
 use super::*;
 use enum_dispatch::enum_dispatch;
-use swear_parser::TopLevelItem;
 
 // #[derive(Debug)]
 #[enum_dispatch(Context)]
