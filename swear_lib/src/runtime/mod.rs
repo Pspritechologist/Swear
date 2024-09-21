@@ -6,6 +6,7 @@ use crate::object::*;
 use crate::context::*;
 use operations::Operations;
 use swear_parser::Expression;
+use swear_parser::Repetition;
 use swear_parser::{Definition, TopLevelItem, Valuable};
 
 // #[derive(Debug)]
@@ -61,6 +62,7 @@ impl ContextStack {
 		match instruction {
 			TopLevelItem::Definition(d) => self.process_instr_definition(d),
 			TopLevelItem::Valuable(v) => self.process_instr_valuable(v),
+			TopLevelItem::Repetition(r) => self.process_instr_repetition(*r),
 			TopLevelItem::Dropper(value) => self.process_instr_dropper(value),
 		}
 	}
@@ -132,6 +134,11 @@ impl ContextStack {
 		}
 	}
 
+	fn process_instr_repetition(&mut self, rep: Repetition) {
+		self.ops_mut().push(Operations::Repeat(rep.value));
+		self.process_instr_valuable(rep.cond);
+	}
+
 	fn push(&mut self, context: ContextLevel) {
 		self.stack.push(context.into());
 		self.at_root = false;
@@ -189,6 +196,15 @@ impl ContextStack {
 
 	fn table_mut(&mut self) -> &mut Vec<ObjectRef> {
 		&mut self.table
+	}
+
+	fn table_pop(&mut self) -> ObjectRef {
+		match self.table_mut().pop() {
+			Some(obj) => obj,
+			None => {
+				panic!("Table is empty");
+			}
+		}
 	}
 }
 

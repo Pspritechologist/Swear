@@ -9,7 +9,7 @@ pub struct Count {
 
 impl Count {
 	fn to_swear_chars(&self) -> Chars {
-		Chars { chars: self.count.clone().with_base_and_precision::<10>(10).value().to_string() }
+		Chars { chars: self.count.to_decimal().value().to_string() }
 	}
 
 	fn to_swear_count(&self) -> Count {
@@ -23,7 +23,7 @@ impl Count {
 	fn to_swear_deck(&self) -> Deck {
 		let mut i = self.count.clone();
 		let mut deck = vec![];
-		while i != crate::BigNum::ZERO {
+		while i.gt(&crate::BigNum::ZERO) {
 			deck.push(Object::from(Count::from(i.clone())).into());
 			i -= crate::BigNum::ONE;
 		}
@@ -33,6 +33,48 @@ impl Count {
 
 	fn to_swear_map(&self) -> Map {
 		Map::default()
+	}
+
+	fn get_functions(&self) -> HashMap<String, FunctionInfo> {
+		let mut functions = HashMap::new();
+
+		// Arithmetic.
+
+		// Add function.
+		// Adds all arguments to the count.
+		functions.insert("add".to_string(), FunctionInfoBuilder::new("add".to_string()).build(Arc::new(Mutex::new(|obj: ObjectRef, args: Vec<ObjectRef>| {
+			let mut count_lock = obj.lock();
+			let count = count_lock.as_count_mut().unwrap();
+
+			let mut args = args.iter();
+			while let Some(arg) = args.next() {
+				let arg = arg.access();
+				count.count += arg.to_count().count;
+			}
+
+			drop(count_lock);
+
+			Ok(Some(obj))
+		}))));
+
+		// Sub function.
+		// Subtracts all arguments from the count.
+		functions.insert("sub".to_string(), FunctionInfoBuilder::new("sub".to_string()).build(Arc::new(Mutex::new(|obj: ObjectRef, args: Vec<ObjectRef>| {
+			let mut count_lock = obj.lock();
+			let count = count_lock.as_count_mut().unwrap();
+
+			let mut args = args.iter();
+			while let Some(arg) = args.next() {
+				let arg = arg.access();
+				count.count -= arg.to_count().count;
+			}
+
+			drop(count_lock);
+
+			Ok(Some(obj))
+		}))));
+
+		functions
 	}
 }
 

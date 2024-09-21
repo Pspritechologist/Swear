@@ -21,6 +21,7 @@ pub use grammar::fileParser as SwearParser;
 pub enum TopLevelItem {
 	Valuable(Valuable),
 	Definition(Definition),
+	Repetition(Box<Repetition>),
 	Dropper(Option<Valuable>),
 }
 
@@ -33,6 +34,25 @@ impl From<Valuable> for TopLevelItem {
 impl From<Definition> for TopLevelItem {
 	fn from(value: Definition) -> Self {
 		TopLevelItem::Definition(value)
+	}
+}
+
+impl From<Repetition> for TopLevelItem {
+	fn from(value: Repetition) -> Self {
+		TopLevelItem::Repetition(Box::new(value))
+	}
+}
+
+#[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Clone)]
+pub struct Repetition {
+	pub cond: Valuable,
+	pub value: TopLevelItem,
+}
+
+impl Repetition {
+	pub fn new(cond: Valuable, value: TopLevelItem) -> Self {
+		Self { cond, value, }
 	}
 }
 

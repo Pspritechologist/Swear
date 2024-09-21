@@ -1,6 +1,8 @@
 use super::*;
 use swear_parser::{Expression, ObjectLiteral, ObjectSymbol};
 
+use self::Operations::*;
+
 use super::ContextStack;
 
 #[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
@@ -24,6 +26,7 @@ pub enum Operations {
 		callback: String,
 		parameters: usize,
 	},
+	Repeat(TopLevelItem),
 	PushContext(Expression),
 	PopContext,
 	ConstructDynamicObject,
@@ -42,10 +45,10 @@ impl ContextStack {
 
 	pub fn handle_op(&mut self, op: Operations) {
 		match op {
-			Operations::PushObject(object) => {
+			PushObject(object) => {
 				self.table_mut().push(Object::from_literal(object).into());
 			},
-			Operations::ConvertObject(symbol) => {
+			ConvertObject(symbol) => {
 				let object = self.table_mut().pop().expect("FIXME");
 				let object = object.access();
 				self.table_mut().push(match symbol {
@@ -57,7 +60,7 @@ impl ContextStack {
 					ObjectSymbol::Map => Object::from(object.to_map()).into(),
 				});
 			},
-			Operations::PushIdentifier(ident) => {
+			PushIdentifier(ident) => {
 				let item = self.get(&ident);
 				match item {
 					Some(ContextItem::Object(obj)) => {
@@ -92,9 +95,9 @@ impl ContextStack {
 				}
 				
 			},
-			Operations::ExCallback { method, callback: id, parameters } => {
+			ExCallback { method, callback: id, parameters } => {
 				let (obj, Some(callback)) = (if method {
-					let objref = self.table_mut().pop().unwrap();
+					let objref = self.table_pop();
 					let obj = objref.access();
 					let func = obj.get_functions().get(&id).map(|info| info.function.clone());
 					drop(obj);
@@ -114,7 +117,7 @@ impl ContextStack {
 					Callback::Native(callback) => {
 						let mut args = Vec::with_capacity(parameters);
 						for _ in 0..parameters {
-							args.push(self.table_mut().pop().unwrap());
+							args.push(self.table_pop());
 						}
 
 						let result = callback.callback
@@ -141,33 +144,53 @@ impl ContextStack {
 						}
 						
 						for arg in callback.args.into_iter().rev() {
-							let obj = self.table_mut().pop().unwrap();
+							let obj = self.table_pop();
 							self.set(arg, obj.into());
 						}
 					}
 				}
 			},
-			Operations::RegisterObject(ident) => {
-				let obj = self.table_mut().pop().unwrap();
+			Repeat(instr) => {
+				let cond = self.table_pop();
+				let cond = cond.access();
+				let count = match &*cond {
+					Object::State(state) => if state.state { 1 } else { 0 },
+					Object::Count(count) => count.count.to_f32().value() as usize,
+					obj => obj.to_count().count.to_f32().value() as usize,
+				};
+
+				//? Repeat one fewer times than intended...
+				for _ in 0..count.saturating_sub(1) {
+					self.process_instructions(instr.clone());
+				}
+				//? ... And then don't clone for the last repetition.
+				//? The reason this is being done is to avoid cloning entirely in the very
+				//? common event of only 'repeating' once for an if-statement.
+				if count > 0 {
+					self.process_instructions(instr);
+				}
+			},
+			RegisterObject(ident) => {
+				let obj = self.table_pop();
 				self.set(ident, obj.into());
 			},
-			Operations::RegisterCallback { ident, parameters, expr } => {
+			RegisterCallback { ident, parameters, expr } => {
 				self.set(ident, Callback::from(SwearCallback {
 					args: parameters,
 					callback: expr,
 				}).into());
 			},
-			Operations::RegisterBlueprint { ident: _, expr: _ } => {
+			RegisterBlueprint { ident: _, expr: _ } => {
 				// self.set(ident, Blueprint::from(expr).into());
 				todo!()
 			},
-			Operations::PushContext(instructions) => {
+			PushContext(instructions) => {
 				self.push(ContextLevel::new(instructions.into()));
 			},
-			Operations::PopContext => {
+			PopContext => {
 				self.pop();
 			},
-			Operations::ConstructDynamicObject => {
+			ConstructDynamicObject => {
 				todo!()
 			}
 		}

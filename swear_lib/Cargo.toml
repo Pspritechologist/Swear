@@ -8,6 +8,7 @@ edition = "2024"
 [dependencies]
 enum_dispatch = "*"
 rand = "*"
+enum-as-inner = "*"
 swear_parser = { path = "swear_parser", default-features = false }
 swear_lib_macros = { path = "swear_lib_macros", optional = false }
 dashu-float = { version = "*", features = [ "rand" ] }

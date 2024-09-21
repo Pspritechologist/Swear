@@ -10,6 +10,8 @@ match {
 	r"'(?:[^'~]|~~|~.)*'" => LITERAL,
 	"[" => EXPRES_START,
 	"]" => EXPRES_END,
+	// Repetition
+	"+" => REPEAT,
 	// Definitions
 	":" => BLUEPRINT,
 	"%" => REGISTER,
@@ -37,7 +39,12 @@ pub file: Expression = (<WS*>) <mut values:(<top_level> (<WS+>))*> <tvalues:top_
 top_level: TopLevelItem = {
 	<valuable> => <>.into(),
 	<definition> => <>.into(),
+	<repetition> => <>.into(),
 	<valuable?> DROPPER => TopLevelItem::Dropper(<>),
+};
+
+repetition: Repetition = {
+	<cond:valuable> REPEAT (<WS*>) <value:top_level> => Repetition::new(cond, value),
 };
 
 definition: Definition = {
@@ -74,12 +81,12 @@ methodCallback: MethodCallback = {
 };
 
 object_conversion: ObjectConversion = {
-	<valuable> CHARS => ObjectConversion::new_to_chars(<>).into(),
-	<valuable> COUNT => ObjectConversion::new_to_count(<>).into(),
-	<valuable> STATE => ObjectConversion::new_to_state(<>).into(),
-	<valuable> ZIP => ObjectConversion::new_to_zip(<>).into(),
-	<valuable> DECK => ObjectConversion::new_to_deck(<>).into(),
-	<valuable> MAP => ObjectConversion::new_to_map(<>).into(),
+	<valuable> CHARS => ObjectConversion::new_to_chars(<>),
+	<valuable> COUNT => ObjectConversion::new_to_count(<>),
+	<valuable> STATE => ObjectConversion::new_to_state(<>),
+	<valuable> ZIP => ObjectConversion::new_to_zip(<>),
+	<valuable> DECK => ObjectConversion::new_to_deck(<>),
+	<valuable> MAP => ObjectConversion::new_to_map(<>),
 };
 
 object_literal: ObjectLiteral = {
