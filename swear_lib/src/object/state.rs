@@ -7,7 +7,7 @@ pub struct State {
 	pub state: bool,
 }
 
-impl State {
+impl<'rt> State {
 	fn to_swear_chars(&self) -> Chars {
 		match self.state {
 			true => "positive",
@@ -26,12 +26,12 @@ impl State {
 		self.clone()
 	}
 
-	fn to_swear_deck(&self) -> Deck {
-		Deck::from(vec![Object::from(self.clone())])
+	fn to_swear_deck(&self) -> Deck<'rt> {
+		Deck::from(vec![Object::from(self.clone())]) //TODO: Shouldn't these be ObjectRefs?
 	}
 
-	fn to_swear_map(&self) -> Map {
-		Map::from(vec![(Object::from(Chars::from("state")), Object::from(self.clone()))])
+	fn to_swear_map(&self) -> Map<'rt> {
+		Map::from(vec![(Object::from(Chars::from("state")), Object::from(self.clone()))]) //TODO: Shouldn't these be ObjectRefs?
 	}
 }
 

@@ -3,7 +3,7 @@ use proc_macro2::TokenStream;
 use super::*;
 
 pub fn swear_object(input: ItemStruct) -> TokenStream {
-	let name = input.ident.clone();
+	let (name, gens) = (input.ident.clone(), input.generics.clone());
 
 	// The portion of functions used to redirect Object conversion.
 	let convert_fns = quote! {
@@ -20,16 +20,16 @@ pub fn swear_object(input: ItemStruct) -> TokenStream {
 			self.to_swear_state()
 		}
 		#[inline(always)]
-		fn to_deck(&self) -> Deck {
+		fn to_deck(&self) -> Deck<'rt> {
 			self.to_swear_deck()
 		}
 		#[inline(always)]
-		fn to_map(&self) -> Map {
+		fn to_map(&self) -> Map<'rt> {
 			self.to_swear_map()
 		}
 
 		#[inline(always)]
-		fn get_functions(&self) -> HashMap<String, FunctionInfo> {
+		fn get_functions(&self) -> HashMap<String, FunctionInfo<'rt>> {
 			self.get_functions()
 		}
 	};
@@ -55,7 +55,7 @@ pub fn swear_object(input: ItemStruct) -> TokenStream {
 	let output = quote! {
 		#input
 
-		impl IObject for #name {
+		impl<'rt> IObject<'rt> for #name #gens {
 			#convert_fns
 			#get_info_fn
 		}

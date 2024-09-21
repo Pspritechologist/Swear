@@ -5,25 +5,29 @@ use super::*;
 #[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Default, PartialEq, Eq)]
 #[swear_object]
-pub struct Map {
-	pub map: Vec<(ObjectRef, ObjectRef)>,
+pub struct Map<'rt> {
+	pub map: Vec<(ObjectRef<'rt>, ObjectRef<'rt>)>,
 }
 
-impl Map {
-	pub fn from_iter_ref<I: IntoIterator<Item = (ObjectRef, ObjectRef)>>(iter: I) -> Self {
-		Self { map: iter.into_iter().collect() }
+impl<'rt> Map<'rt> {
+	pub fn from_vec_lit(v: &Vec<(ObjectLiteral, ObjectLiteral)>) -> Self {
+		Self { map: v.iter().map(|(k, v)| (Object::from_literal(k).into(), Object::from_literal(v).into())).collect() }
 	}
 
-	pub fn from_iter_obj<I: IntoIterator<Item = (Object, Object)>>(iter: I) -> Self {
-		Self { map: iter.into_iter().map(|(k, v)| (ObjectRef::from(k), ObjectRef::from(v))).collect() }
-	}
+	// pub fn from_iter_ref<I: IntoIterator<Item = (ObjectRef, ObjectRef)>>(iter: I) -> Self {
+	// 	Self { map: iter.into_iter().collect() }
+	// }
 
-	pub fn from_iter_lit<I: IntoIterator<Item = (ObjectLiteral, ObjectLiteral)>>(iter: I) -> Self {
-		Self { map: iter.into_iter().map(|(k, v)| (Object::from(k).into(), Object::from(v).into())).collect() }
-	}
+	// pub fn from_iter_obj<I: IntoIterator<Item = (Object, Object)>>(iter: I) -> Self {
+	// 	Self { map: iter.into_iter().map(|(k, v)| (ObjectRef::from(k), ObjectRef::from(v))).collect() }
+	// }
+
+	// pub fn from_iter_lit<I: IntoIterator<Item = (ObjectLiteral, ObjectLiteral)>>(iter: I) -> Self {
+	// 	Self { map: iter.into_iter().map(|(k, v)| (Object::from_literal(&k).into(), Object::from_literal(&v).into())).collect() }
+	// }
 }
 
-impl Map {
+impl<'rt> Map<'rt> {
 	fn to_swear_chars(&self) -> Chars {
 		let mut chars = String::new();
 
@@ -46,16 +50,16 @@ impl Map {
 		(!self.map.is_empty()).into()
 	}
 
-	fn to_swear_deck(&self) -> Deck {
+	fn to_swear_deck(&self) -> Deck<'rt> {
 		Deck::default()	
 	}
 
-	fn to_swear_map(&self) -> Map {
+	fn to_swear_map(&self) -> Map<'rt> {
 		self.clone()
 	}
 }
 
-impl std::fmt::Debug for Map {
+impl<'rt> std::fmt::Debug for Map<'rt> {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		// Ensure formatter flags are used correctly
 		let mut debug = f.debug_map();
@@ -66,50 +70,50 @@ impl std::fmt::Debug for Map {
 	}
 }
 
-impl From<Vec<(ObjectRef, ObjectRef)>> for Map {
-	fn from(map: Vec<(ObjectRef, ObjectRef)>) -> Self {
+impl<'rt> From<Vec<(ObjectRef<'rt>, ObjectRef<'rt>)>> for Map<'rt> {
+	fn from(map: Vec<(ObjectRef<'rt>, ObjectRef<'rt>)>) -> Self {
 		Self { map }
 	}
 }
 
-impl From<Vec<(ObjectRef, Object)>> for Map {
-	fn from(map: Vec<(ObjectRef, Object)>) -> Self {
+impl<'rt> From<Vec<(ObjectRef<'rt>, Object<'rt>)>> for Map<'rt> {
+	fn from(map: Vec<(ObjectRef<'rt>, Object<'rt>)>) -> Self {
 		Self { map: map.into_iter().map(|(k, v)| (k, ObjectRef::from(v))).collect() }
 	}
 }
 
-impl From<Vec<(Object, ObjectRef)>> for Map {
-	fn from(map: Vec<(Object, ObjectRef)>) -> Self {
+impl<'rt> From<Vec<(Object<'rt>, ObjectRef<'rt>)>> for Map<'rt> {
+	fn from(map: Vec<(Object<'rt>, ObjectRef<'rt>)>) -> Self {
 		Self { map: map.into_iter().map(|(k, v)| (ObjectRef::from(k), v)).collect() }
 	}
 }
 
-impl From<Vec<(Object, Object)>> for Map {
-	fn from(map: Vec<(Object, Object)>) -> Self {
+impl<'rt> From<Vec<(Object<'rt>, Object<'rt>)>> for Map<'rt> {
+	fn from(map: Vec<(Object<'rt>, Object<'rt>)>) -> Self {
 		Self { map: map.into_iter().map(|(k, v)| (ObjectRef::from(k), ObjectRef::from(v))).collect() }
 	}
 }
 
-impl FromIterator<(ObjectRef, ObjectRef)> for Map {
-	fn from_iter<T: IntoIterator<Item = (ObjectRef, ObjectRef)>>(iter: T) -> Self {
+impl<'rt> FromIterator<(ObjectRef<'rt>, ObjectRef<'rt>)> for Map<'rt> {
+	fn from_iter<T: IntoIterator<Item = (ObjectRef<'rt>, ObjectRef<'rt>)>>(iter: T) -> Self {
 		Self { map: iter.into_iter().collect() }
 	}
 }
 
-impl FromIterator<(ObjectRef, Object)> for Map {
-	fn from_iter<T: IntoIterator<Item = (ObjectRef, Object)>>(iter: T) -> Self {
+impl<'rt> FromIterator<(ObjectRef<'rt>, Object<'rt>)> for Map<'rt> {
+	fn from_iter<T: IntoIterator<Item = (ObjectRef<'rt>, Object<'rt>)>>(iter: T) -> Self {
 		Self { map: iter.into_iter().map(|(k, v)| (k, ObjectRef::from(v))).collect() }
 	}
 }
 
-impl FromIterator<(Object, ObjectRef)> for Map {
-	fn from_iter<T: IntoIterator<Item = (Object, ObjectRef)>>(iter: T) -> Self {
+impl<'rt> FromIterator<(Object<'rt>, ObjectRef<'rt>)> for Map<'rt> {
+	fn from_iter<T: IntoIterator<Item = (Object<'rt>, ObjectRef<'rt>)>>(iter: T) -> Self {
 		Self { map: iter.into_iter().map(|(k, v)| (ObjectRef::from(k), v)).collect() }
 	}
 }
 
-impl FromIterator<(Object, Object)> for Map {
-	fn from_iter<T: IntoIterator<Item = (Object, Object)>>(iter: T) -> Self {
+impl<'rt> FromIterator<(Object<'rt>, Object<'rt>)> for Map<'rt> {
+	fn from_iter<T: IntoIterator<Item = (Object<'rt>, Object<'rt>)>>(iter: T) -> Self {
 		Self { map: iter.into_iter().map(|(k, v)| (ObjectRef::from(k), ObjectRef::from(v))).collect() }
 	}
 }

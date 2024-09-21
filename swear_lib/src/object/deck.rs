@@ -5,25 +5,29 @@ use super::*;
 #[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Default, PartialEq, Eq)]
 #[swear_object]
-pub struct Deck {
-	pub deck: Vec<ObjectRef>,
+pub struct Deck<'rt> {
+	pub deck: Vec<ObjectRef<'rt>>,
 }
 
-impl Deck {
-	pub fn from_iter_ref<I: IntoIterator<Item = ObjectRef>>(iter: I) -> Self {
+impl<'rt> Deck<'rt> {
+	pub fn from_vec_lit(v: &Vec<ObjectLiteral>) -> Self {
+		Self { deck: v.iter().map(|l| Object::from_literal(l).into()).collect() }
+	}
+
+	pub fn from_iter_ref<I: IntoIterator<Item = ObjectRef<'rt>>>(iter: I) -> Self {
 		Self { deck: iter.into_iter().collect() }
 	}
 
-	pub fn from_iter_obj<I: IntoIterator<Item = Object>>(iter: I) -> Self {
+	pub fn from_iter_obj<I: IntoIterator<Item = Object<'rt>>>(iter: I) -> Self {
 		Self { deck: iter.into_iter().map(ObjectRef::from).collect() }
 	}
 
 	pub fn from_iter_lit<I: IntoIterator<Item = ObjectLiteral>>(iter: I) -> Self {
-		Self { deck: iter.into_iter().map(|l| Object::from(l).into()).collect() }
+		Self { deck: iter.into_iter().map(|l| Object::from_literal(&l).into()).collect() }
 	}
 }
 
-impl Deck {
+impl<'rt> Deck<'rt> {
 	fn to_swear_chars(&self) -> Chars {
 		let mut chars = String::with_capacity(self.deck.len() * 4);
 		for s in self.deck.iter().map(|o| o.access().to_chars().chars) {
@@ -42,11 +46,11 @@ impl Deck {
 		(!self.deck.is_empty()).into()
 	}
 
-	fn to_swear_deck(&self) -> Deck {
+	fn to_swear_deck(&self) -> Deck<'rt> {
 		self.clone()
 	}
 
-	fn to_swear_map(&self) -> Map {
+	fn to_swear_map(&self) -> Map<'rt> {
 		Map::from(self.deck
 			.iter()
 			.enumerate()
@@ -55,7 +59,7 @@ impl Deck {
 	}
 }
 
-impl std::fmt::Debug for Deck {
+impl<'rt> std::fmt::Debug for Deck<'rt> {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		let mut debug = f.debug_list();
 		for o in self.deck.iter() {
@@ -65,14 +69,14 @@ impl std::fmt::Debug for Deck {
 	}
 }
 
-impl From<Vec<ObjectRef>> for Deck {
-	fn from(deck: Vec<ObjectRef>) -> Self {
+impl<'rt> From<Vec<ObjectRef<'rt>>> for Deck<'rt> {
+	fn from(deck: Vec<ObjectRef<'rt>>) -> Self {
 		Self { deck }
 	}
 }
 
-impl From<Vec<Object>> for Deck {
-	fn from(deck: Vec<Object>) -> Self {
+impl<'rt> From<Vec<Object<'rt>>> for Deck<'rt> {
+	fn from(deck: Vec<Object<'rt>>) -> Self {
 		Self { deck: deck.into_iter().map(ObjectRef::from).collect() }
 	}
 }

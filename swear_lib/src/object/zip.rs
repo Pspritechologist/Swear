@@ -5,7 +5,7 @@ use super::*;
 // #[swear_object]
 pub struct Zip;
 
-impl IObject for Zip {
+impl<'rt> IObject<'rt> for Zip {
 	fn to_chars(&self) -> Chars {
 		Chars::default()
 	}
@@ -18,11 +18,11 @@ impl IObject for Zip {
 		State::default()
 	}
 
-	fn to_deck(&self) -> Deck {
+	fn to_deck(&self) -> Deck<'rt> {
 		Deck::default()
 	}
 
-	fn to_map(&self) -> Map {
+	fn to_map(&self) -> Map<'rt> {
 		Map::default()
 	}
 

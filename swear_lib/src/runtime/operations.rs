@@ -5,34 +5,34 @@ use self::Operations::*;
 
 use super::ContextStack;
 
-#[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
+// #[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug)]
-pub enum Operations {
-	PushObject(ObjectLiteral),
-	ConvertObject(ObjectSymbol),
-	PushIdentifier(String),
-	RegisterObject(String),
+pub enum Operations<'rt> {
+	PushObject(&'rt ObjectLiteral),
+	ConvertObject(&'rt ObjectSymbol),
+	PushIdentifier(&'rt String),
+	RegisterObject(&'rt String),
 	RegisterCallback {
-		ident: String,
-		parameters: Vec<String>,
-		expr: Expression,
+		ident: &'rt String,
+		parameters: &'rt Vec<String>,
+		expr: &'rt Expression,
 	},
 	RegisterBlueprint {
-		ident: String,
-		expr: Expression,
+		ident: &'rt String,
+		expr: &'rt Expression,
 	},
 	ExCallback {
 		method: bool,
-		callback: String,
+		callback: &'rt String,
 		parameters: usize,
 	},
-	Repeat(TopLevelItem),
-	PushContext(Expression),
+	Repeat(&'rt TopLevelItem),
+	PushContext(&'rt Expression),
 	PopContext,
 	ConstructDynamicObject,
 }
 
-impl ContextStack {
+impl<'rt> ContextStack<'rt> {
 	/// Handles the next operation in the stack.
 	/// 
 	/// # Panics
@@ -43,7 +43,7 @@ impl ContextStack {
 		self.handle_op(operation);
 	}
 
-	pub fn handle_op(&mut self, op: Operations) {
+	pub fn handle_op(&mut self, op: Operations<'rt>) {
 		match op {
 			PushObject(object) => {
 				self.table_mut().push(Object::from_literal(object).into());
@@ -80,7 +80,7 @@ impl ContextStack {
 								unreachable!("Called non-method native function"); //? Swear does not have native functions.
 							},
 							Callback::Swear(SwearCallback { args, callback }) => {
-								self.push(ContextLevel::new(callback));
+								self.push(ContextLevel::new(&callback).into());
 								for arg in args.into_iter().rev() {
 									self.set(arg, ObjectRef::default().into());
 								}
@@ -99,12 +99,13 @@ impl ContextStack {
 				let (obj, Some(callback)) = (if method {
 					let objref = self.table_pop();
 					let obj = objref.access();
-					let func = obj.get_functions().get(&id).map(|info| info.function.clone());
+					let funcs = obj.get_functions();
+					let func = funcs.get(id);
 					drop(obj);
-					(Some(objref), func)
+					(Some(objref), func.map(|func| func.function.clone()))
 				} else {
 					match self.get(&id) {
-						Some(ContextItem::Callback(callback)) => (None, Some(callback)),
+						Some(ContextItem::Callback(callback)) => (None, Some(callback.clone())),
 						_ => (None, None),
 					}
 				}) else {
@@ -131,7 +132,7 @@ impl ContextStack {
 						self.table_mut().push(result);
 					},
 					Callback::Swear(callback) => {
-						self.push(ContextLevel::new(callback.callback));
+						self.push(ContextLevel::new(&callback.callback).into());
 						let diff = parameters as i128 - callback.args.len() as i128; //? i128 to prevent underflow.
 						if diff > 0 {
 							for _ in 0..=diff {
@@ -159,36 +160,30 @@ impl ContextStack {
 					obj => obj.to_count().count.to_f32().value() as usize,
 				};
 
-				//? Repeat one fewer times than intended...
-				for _ in 0..count.saturating_sub(1) {
-					self.process_instructions(instr.clone());
-				}
-				//? ... And then don't clone for the last repetition.
-				//? The reason this is being done is to avoid cloning entirely in the very
-				//? common event of only 'repeating' once for an if-statement.
-				if count > 0 {
+				for _ in 0..count {
 					self.process_instructions(instr);
 				}
 			},
 			RegisterObject(ident) => {
 				let obj = self.table_pop();
-				self.set(ident, obj.into());
+				self.set(ident.clone(), obj.into()); //TODO: Clone
 			},
 			RegisterCallback { ident, parameters, expr } => {
-				self.set(ident, Callback::from(SwearCallback {
-					args: parameters,
-					callback: expr,
-				}).into());
+				self.set(ident.clone(), ContextItem::Callback(Callback::Swear(SwearCallback { //TODO: Clone
+					args: parameters.clone(), //TODO: Clone
+					callback: std::sync::Arc::new(expr),
+				})));
 			},
 			RegisterBlueprint { ident: _, expr: _ } => {
 				// self.set(ident, Blueprint::from(expr).into());
 				todo!()
 			},
 			PushContext(instructions) => {
-				self.push(ContextLevel::new(instructions.into()));
+				self.push(ContextLevel::new(instructions).into());
 			},
 			PopContext => {
-				self.pop();
+				let result = self.table_pop();
+				self.pop(result);
 			},
 			ConstructDynamicObject => {
 				todo!()

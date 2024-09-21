@@ -5,41 +5,42 @@ use enum_dispatch::enum_dispatch;
 
 // #[derive(Debug)]
 #[enum_dispatch(Context)]
-pub enum ContextHolder {
-	ContextLevel,
-	ObjectRef,
+pub enum ContextHolder<'rt> {
+	ContextLevel(ContextLevel<'rt>),
+	ObjectRef(ObjectRef<'rt>),
 }
 
 #[enum_dispatch]
-pub trait Context {
-	fn get(&self, key: &str) -> Option<ContextItem>;
-	fn set(&mut self, key: String, value: ContextItem);
+pub trait Context<'rt> {
+	fn get(&self, key: &str) -> Option<ContextItem<'rt>>;
+	fn set(&mut self, key: String, value: ContextItem<'rt>);
 }
 
-#[derive(Debug, Default)]
-pub struct ContextLevel {
-	pub items: std::collections::HashMap<String, ContextItem>,
-	pub instructions: Expression,
-	pub ops: Vec<Operations>,
+#[derive(Debug)]
+pub struct ContextLevel<'rt> {
+	pub items: std::collections::HashMap<String, ContextItem<'rt>>,
+	pub instructions: &'rt Expression,
+	pub instr_index: usize,
+	pub ops: Vec<Operations<'rt>>,
 }
 
-impl ContextLevel {
-	pub fn new(mut instructions: Expression) -> Self {
-		instructions.reverse();
+impl<'rt> ContextLevel<'rt> {
+	pub fn new(instructions: &'rt Expression) -> Self {
 		Self {
 			items: std::collections::HashMap::new(),
 			instructions,
+			instr_index: 0,
 			ops: Vec::new(),
 		}
 	}
 }
 
-impl Context for ContextLevel {
-	fn get(&self, key: &str) -> Option<ContextItem> {
+impl<'rt> Context<'rt> for ContextLevel<'rt> {
+	fn get(&self, key: &str) -> Option<ContextItem<'rt>> {
 		self.items.get(key).cloned()
 	}
 
-	fn set(&mut self, key: String, value: ContextItem) {
+	fn set(&mut self, key: String, value: ContextItem<'rt>) {
 		self.items.insert(key, value);
 	}
 }

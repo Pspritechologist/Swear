@@ -12,7 +12,7 @@ pub struct Chars {
 	pub chars: String,
 }
 
-impl Chars {
+impl<'rt> Chars {
 	fn to_swear_chars(&self) -> Chars {
 		self.clone()
 	}
@@ -25,20 +25,20 @@ impl Chars {
 		State { state: !self.chars.is_empty() }
 	}
 
-	fn to_swear_deck(&self) -> Deck {
+	fn to_swear_deck(&self) -> Deck<'rt> {
 		Deck { deck: self.chars.split_whitespace().map(|s| Object::from(Chars::from(s)).into()).collect() }
 	}
 
-	fn to_swear_map(&self) -> Map {
+	fn to_swear_map(&self) -> Map<'rt> {
 		Map { map: self.chars.split_whitespace().map(|s| (Object::from(Chars::from(s)).into(), Object::from(Zip).into())).collect() }
 	}
 
-	fn get_functions(&self) -> HashMap<String, FunctionInfo> {
+	fn get_functions(&self) -> HashMap<String, FunctionInfo<'rt>> {
 		let mut functions = HashMap::new();
 
 		// Scribe function.
 		// Prints the characters to the console.
-		functions.insert("scribe".to_string(), FunctionInfoBuilder::new("scribe".to_string()).build(Arc::new(Mutex::new(|obj: ObjectRef, _| {
+		functions.insert("scribe".to_string(), FunctionInfoBuilder::new("scribe".to_string()).build(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, _| {
 			let lock = obj.access();
 			println!("{}", lock.to_chars().chars);
 			Ok(None)
@@ -46,7 +46,7 @@ impl Chars {
 
 		// Concat function.
 		// Takes any number of arguments and concatenates them into a single string separated by the method target.
-		functions.insert("concat".to_string(), FunctionInfoBuilder::new("concat".to_string()).build(Arc::new(Mutex::new(|obj: ObjectRef, args: Vec<ObjectRef>| {
+		functions.insert("concat".to_string(), FunctionInfoBuilder::new("concat".to_string()).build(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
 			let target = obj.access();
 			let mut result = String::new();
 			let mut iter = args.iter();
@@ -63,19 +63,19 @@ impl Chars {
 
 		// Size function.
 		// Returns the number of characters in the string.
-		functions.insert("size".to_string(), FunctionInfoBuilder::new("size".to_string()).build(Arc::new(Mutex::new(|obj: ObjectRef, _| {
+		functions.insert("size".to_string(), FunctionInfoBuilder::new("size".to_string()).build(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, _| {
 			let lock = obj.access();
 			Ok(Some(Object::from(Count::from(crate::BigNum::from(lock.to_chars().chars.len()))).into()))
 		}))));
 
-		functions.insert("load".to_string(), FunctionInfoBuilder::new("load".to_string()).build(Arc::new(Mutex::new(|obj: ObjectRef, _| {
-			//TODO: Customize lib loading.
-			let lock = obj.access();
-			dyn_libraries::load_library(
-				// &current_exe().unwrap().with_file_name(&lock.to_chars().chars).with_extension("slur") //? Non-debug.
-				&current_exe().unwrap().with_file_name(format!("libswear_{}", &lock.to_chars().chars)).with_extension("so")
-			).map(|o| Some(o)).map_err(|_| eprintln!("Failed to load library!"))
-		}))));
+		// functions.insert("load".to_string(), FunctionInfoBuilder::new("load".to_string()).build(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, _| {
+		// 	//TODO: Customize lib loading.
+		// 	let lock = obj.access();
+		// 	dyn_libraries::load_library(
+		// 		// &current_exe().unwrap().with_file_name(&lock.to_chars().chars).with_extension("slur") //? Non-debug.
+		// 		&current_exe().unwrap().with_file_name(format!("libswear_{}", &lock.to_chars().chars)).with_extension("so")
+		// 	).map(|o| Some(o)).map_err(|_| eprintln!("Failed to load library!"))
+		// }))));
 
 		functions
 	}
