@@ -171,7 +171,7 @@ impl<'rt> ContextStack<'rt> {
 			RegisterCallback { ident, parameters, expr } => {
 				self.set(ident.clone(), ContextItem::Callback(Callback::Swear(SwearCallback { //TODO: Clone
 					args: parameters.clone(), //TODO: Clone
-					callback: std::sync::Arc::new(expr),
+					callback: expr,
 				})));
 			},
 			RegisterBlueprint { ident: _, expr: _ } => {

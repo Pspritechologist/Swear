@@ -52,7 +52,7 @@ impl<'rt> From<NativeCallback<'rt>> for Callback<'rt> {
 #[derive(Debug, Clone)]
 pub struct SwearCallback<'rt> {
 	pub args: Vec<String>,
-	pub callback: std::sync::Arc<&'rt Expression>,
+	pub callback: &'rt Expression,
 }
 
 #[repr(C)] //? Used in Dynamic libraries.
