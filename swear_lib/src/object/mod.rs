@@ -180,7 +180,7 @@ impl<'rt> FunctionInfoBuilder {
 		self
 	}
 
-	pub fn build(self, function: Arc<Mutex<ObjectFunction<'rt>>>) -> FunctionInfo<'rt> {
+	pub fn build_native(self, function: Arc<Mutex<ObjectFunction<'rt>>>) -> FunctionInfo<'rt> {
 		FunctionInfo {
 			name: self.name,
 			arg_count: self.arg_count,
@@ -188,6 +188,14 @@ impl<'rt> FunctionInfoBuilder {
 				arg_count: self.arg_count,
 				callback: function,
 			}.into(),
+		}
+	}
+
+	pub fn build(self, callback: Callback<'rt>) -> FunctionInfo<'rt> {
+		FunctionInfo {
+			name: self.name,
+			arg_count: self.arg_count,
+			function: callback,
 		}
 	}
 }

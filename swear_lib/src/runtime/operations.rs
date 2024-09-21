@@ -29,7 +29,6 @@ pub enum Operations<'rt> {
 	Repeat(&'rt TopLevelItem),
 	PushContext(&'rt Expression),
 	PopContext,
-	ConstructDynamicObject,
 }
 
 impl<'rt> ContextStack<'rt> {
@@ -87,9 +86,8 @@ impl<'rt> ContextStack<'rt> {
 							}
 						}
 					},
-					Some(ContextItem::Blueprint(_blueprint)) => {
-						// self.push(ContextLevel::new(blueprint.callback.clone()));
-						todo!()
+					Some(ContextItem::Blueprint(blueprint)) => {
+						self.push(BlueprintContext::new(blueprint.expr).into());
 					},
 					None => self.table_mut().push(Object::default().into()),
 				}
@@ -174,20 +172,17 @@ impl<'rt> ContextStack<'rt> {
 					callback: expr,
 				})));
 			},
-			RegisterBlueprint { ident: _, expr: _ } => {
-				// self.set(ident, Blueprint::from(expr).into());
-				todo!()
+			RegisterBlueprint { ident, expr } => {
+				self.set(ident.clone(), ContextItem::Blueprint(Blueprint {
+					expr,
+				}));
 			},
 			PushContext(instructions) => {
 				self.push(ContextLevel::new(instructions).into());
 			},
 			PopContext => {
-				let result = self.table_pop();
-				self.pop(result);
+				self.pop();
 			},
-			ConstructDynamicObject => {
-				todo!()
-			}
 		}
 	}
 }

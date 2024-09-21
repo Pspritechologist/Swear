@@ -9,7 +9,7 @@ use swear_parser::Expression;
 use swear_parser::Repetition;
 use swear_parser::{Definition, TopLevelItem, Valuable};
 
-// #[derive(Debug)]
+#[derive(Debug)]
 pub struct ContextStack<'rt> {
 	// script: Expression,
 	stack: Vec<ContextHolder<'rt>>,
@@ -41,18 +41,26 @@ impl<'rt> SwearRuntime<'rt> for ContextStack<'rt> {
 	}
 
 	fn step(&mut self) {
+		if self.is_finished() {
+			return;
+		}
+
 		while self.ops().is_empty() {
-			let cont = self.cont_level();
-			if cont.instr_index >= cont.instructions.len() {
-				let obj = self.table_mut().pop().unwrap_or_else(|| Object::default().into());
-				self.pop(obj);
+
+			let cont = self.runtime_cont();
+			if cont.instr_index() >= cont.instructions().len() {
+				self.pop();
+				if self.is_finished() {
+					return;
+				}
+
 				continue;
 			}
 
-			let instr = &cont.instructions[cont.instr_index];
+			let instr = &cont.instructions()[cont.instr_index()];
 			self.process_instructions(&instr);
 
-			self.cont_level_mut().instr_index += 1;
+			*self.runtime_cont_mut().instr_index_mut() += 1;
 		}
 
 		self.handle_next_op();
@@ -79,12 +87,11 @@ impl<'rt> ContextStack<'rt> {
 
 	fn process_instr_definition(&mut self, definition: &'rt Definition) {
 		match definition {
-			Definition::Blueprint { name: _, exprs: _ } => {
-				todo!();
-				// self.ops_mut().push(Operations::RegisterBlueprint {
-				// 	ident: name,
-				// 	expr: exprs,
-				// });
+			Definition::Blueprint { name, exprs } => {
+				self.ops_mut().push(Operations::RegisterBlueprint {
+					ident: name,
+					expr: exprs,
+				});
 			},
 			Definition::Callback { name, parameters, exprs } => {
 				self.ops_mut().push(Operations::RegisterCallback {
@@ -154,7 +161,9 @@ impl<'rt> ContextStack<'rt> {
 		self.at_root = false;
 	}
 
-	fn pop(&mut self, result: ObjectRef<'rt>) {
+	fn pop(&mut self) {
+		let result = self.table_mut().pop().unwrap_or_default();
+
 		if self.at_root {
 			self.finished = true;
 			self.stack.clear();
@@ -162,9 +171,16 @@ impl<'rt> ContextStack<'rt> {
 			return;
 		}
 
-		self.stack.pop();
+		if let ContextHolder::RuntimeContext(RuntimeContext::Blueprint(blueprint_cont)) = self.stack.pop().unwrap() {
+			let mut obj = Dynamic::default();
+			for (key, value) in blueprint_cont.items {
+				obj.set(key, value);
+			}
 
-		self.table_mut().push(result);
+			self.table_mut().push(ObjectRef::new(obj.into()));
+		} else {
+			self.table_mut().push(result);
+		};
 
 		if self.stack.len() == 1 {
 			self.at_root = true;
@@ -179,30 +195,30 @@ impl<'rt> ContextStack<'rt> {
 		self.stack.last_mut().unwrap()
 	}
 
-	fn cont_level(&self) -> &ContextLevel<'rt> {
+	fn runtime_cont(&self) -> &RuntimeContext<'rt> {
 		let mut iter = self.stack.iter().rev();
 		loop {
-			if let ContextHolder::ContextLevel(level) = iter.next().unwrap() {
+			if let ContextHolder::RuntimeContext(level) = iter.next().unwrap() {
 				return level;
 			}
 		}
 	}
 
-	fn cont_level_mut(&mut self) -> &mut ContextLevel<'rt> {
+	fn runtime_cont_mut(&mut self) -> &mut RuntimeContext<'rt> {
 		let mut iter = self.stack.iter_mut().rev();
 		loop {
-			if let ContextHolder::ContextLevel(level) = iter.next().unwrap() {
+			if let ContextHolder::RuntimeContext(level) = iter.next().unwrap() {
 				return level;
 			}
 		}
 	}
 
 	fn ops(&self) -> &Vec<Operations<'rt>> {
-		&self.cont_level().ops
+		&self.runtime_cont().ops()
 	}
 
 	fn ops_mut(&mut self) -> &mut Vec<Operations<'rt>> {
-		&mut self.cont_level_mut().ops
+		self.runtime_cont_mut().ops_mut()
 	}
 
 	// fn table(&self) -> &Vec<ObjectRef> {
@@ -223,7 +239,7 @@ impl<'rt> ContextStack<'rt> {
 	}
 }
 
-impl<'rt> Context<'rt> for ContextStack<'rt> {
+impl<'rt> IContext<'rt> for ContextStack<'rt> {
 	fn get(&self,key: &str) -> Option<ContextItem<'rt>> {
 		for context in self.stack.iter().rev() {
 			if let Some(value) = context.get(key) {

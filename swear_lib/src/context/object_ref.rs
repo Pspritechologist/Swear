@@ -86,7 +86,7 @@ impl<'rt> From<Object<'rt>> for ObjectRef<'rt> {
 // 	}
 // }
 
-impl<'rt> Context<'rt> for ObjectRef<'rt> {
+impl<'rt> IContext<'rt> for ObjectRef<'rt> {
 	fn get(&self, key: &str) -> Option<ContextItem<'rt>> {
 		let lock = self.access();
 		match lock.deref() {

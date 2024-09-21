@@ -54,14 +54,17 @@ impl<'rt> IObject<'rt> for Dynamic<'rt> {
 	fn get_functions(&self) -> HashMap<String, FunctionInfo<'rt>> {
 		self.contents.iter().filter_map(|(key, value)| match value {
 			ContextItem::Callback(Callback::Native(NativeCallback { callback, .. })) => {
-				Some((key.clone(), FunctionInfoBuilder::new(key.clone()).build(callback.clone())))
+				Some((key.clone(), FunctionInfoBuilder::new(key.clone()).build_native(callback.clone()))) //TODO: Clone :(
+			},
+			ContextItem::Callback(callback) => {
+				Some((key.clone(), FunctionInfoBuilder::new(key.clone()).build(callback.clone()))) //TODO: Clone :(
 			},
 			_ => None,
 		}).collect()
 	}
 }
 
-impl<'rt> context::Context<'rt> for Dynamic<'rt> {
+impl<'rt> context::IContext<'rt> for Dynamic<'rt> {
 	fn get(&self, key: &str) -> Option<ContextItem<'rt>> {
 		self.contents.get(key).cloned()
 	}

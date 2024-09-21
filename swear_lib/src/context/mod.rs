@@ -13,7 +13,7 @@ use std::{fmt::Debug, ops::{Deref, DerefMut}, sync::{Arc, Mutex, RwLock}};
 pub enum ContextItem<'rt> {
 	Object(ObjectRef<'rt>),
 	Callback(Callback<'rt>),
-	Blueprint(Blueprint),
+	Blueprint(Blueprint<'rt>),
 }
 impl<'rt> From<ObjectRef<'rt>> for ContextItem<'rt> {
 	fn from(object: ObjectRef<'rt>) -> Self {
@@ -25,11 +25,11 @@ impl<'rt> From<ObjectRef<'rt>> for ContextItem<'rt> {
 // 		Self::Callback(callback)
 // 	}
 // }
-impl<'rt> From<Blueprint> for ContextItem<'rt> {
-	fn from(blueprint: Blueprint) -> Self {
-		Self::Blueprint(blueprint)
-	}
-}
+// impl<'rt> From<Blueprint> for ContextItem<'rt> {
+// 	fn from(blueprint: Blueprint) -> Self {
+// 		Self::Blueprint(blueprint)
+// 	}
+// }
 
 #[repr(C)] //? Used in Dynamic libraries.
 #[derive(Debug, Clone)]
@@ -69,12 +69,12 @@ impl<'rt> Debug for NativeCallback<'rt> {
 }
 
 #[derive(Debug, Clone)]
-pub struct Blueprint {
-	pub expr: Expression,
+pub struct Blueprint<'rt> {
+	pub expr: &'rt Expression,
 }
 
-impl From<Expression> for Blueprint {
-	fn from(expr: Expression) -> Self {
-		Self { expr }
-	}
-}
+// impl From<Expression> for Blueprint {
+// 	fn from(expr: Expression) -> Self {
+// 		Self { expr }
+// 	}
+// }
