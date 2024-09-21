@@ -20,16 +20,15 @@ pub trait Context {
 pub struct ContextLevel {
 	pub items: std::collections::HashMap<String, ContextItem>,
 	pub instructions: Expression,
-	pub instr_index: usize,
 	pub ops: Vec<Operations>,
 }
 
 impl ContextLevel {
-	pub fn new(instructions: Expression) -> Self {
+	pub fn new(mut instructions: Expression) -> Self {
+		instructions.reverse();
 		Self {
 			items: std::collections::HashMap::new(),
 			instructions,
-			instr_index: 0,
 			ops: Vec::new(),
 		}
 	}

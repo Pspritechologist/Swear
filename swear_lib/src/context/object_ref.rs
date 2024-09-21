@@ -44,6 +44,12 @@ impl ObjectRef {
 			Err(err) => panic!("Failed to lock ObjectRef mutably: {:?}", dbg!(err)),
 		}
 	}
+
+	/// Identical to cloning, but doesn't look like cloning.
+	#[inline(always)]
+	pub fn copy(&self) -> Self {
+		self.clone()
+	}
 }
 
 impl std::fmt::Debug for ObjectRef {

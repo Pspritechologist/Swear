@@ -6,7 +6,8 @@ use crate::object::*;
 use crate::context::*;
 use operations::Operations;
 use swear_parser::Expression;
-use swear_parser::{Definition, ObjectSymbol, TopLevelItem, Valuable};
+use swear_parser::ObjectSymbol;
+use swear_parser::{Definition, TopLevelItem, Valuable};
 
 // #[derive(Debug)]
 pub struct ContextStack {
@@ -35,7 +36,7 @@ impl SwearRuntime for ContextStack {
 	fn step(&mut self) -> Option<Object> {
 		while self.ops().is_empty() {
 			let cont = self.cont_level();
-			if cont.instr_index >= cont.instructions.len() {
+			if cont.instructions.is_empty() {
 				if !self.at_root {
 					let obj = self.table_mut().pop().unwrap_or_else(|| Object::default().into());
 					self.pop();
@@ -46,14 +47,12 @@ impl SwearRuntime for ContextStack {
 				}
 			}
 
-			self.derive_operations(&cont.instructions[cont.instr_index].clone()); //FIXME
-			self.cont_level_mut().instr_index += 1;
+			let instr = self.cont_level_mut().instructions.pop().unwrap();
+			self.process_instructions(instr);
 		}
-		
-		// println!("{:?}", &self.table());
 
-		let operation = self.ops_mut().pop().unwrap();
-		match operation {
+		let op = self.ops_mut().pop().unwrap();
+		match op {
 			Operations::PushObject(object) => {
 				self.table_mut().push(Object::from_literal(object).into());
 			},
@@ -73,7 +72,7 @@ impl SwearRuntime for ContextStack {
 				let item = self.get(&ident);
 				match item {
 					Some(ContextItem::Object(obj)) => {
-						let obj = obj.clone();
+						let obj = obj.copy();
 						self.table_mut().push(obj);
 					},
 					Some(ContextItem::Callback(callback)) => {
@@ -89,9 +88,9 @@ impl SwearRuntime for ContextStack {
 								unreachable!("Called non-method native function"); //? Swear does not have native functions.
 							},
 							Callback::Swear(SwearCallback { args, callback }) => {
-								self.push(ContextLevel::new(callback.clone()));
-								for arg in args.iter().rev() {
-									self.set(arg.clone(), ObjectRef::default().into());
+								self.push(ContextLevel::new(callback));
+								for arg in args.into_iter().rev() {
+									self.set(arg, ObjectRef::default().into());
 								}
 							}
 						}
@@ -104,22 +103,22 @@ impl SwearRuntime for ContextStack {
 				}
 				
 			},
-			Operations::ExCallback { method, callback, parameters } => {
+			Operations::ExCallback { method, callback: id, parameters } => {
 				let (obj, Some(callback)) = (if method {
 					let objref = self.table_mut().pop().unwrap();
 					let obj = objref.access();
-					let func = obj.get_functions().get(&callback).map(|info| info.function.clone());
+					let func = obj.get_functions().get(&id).map(|info| info.function.clone());
 					drop(obj);
 					(Some(objref), func)
 				} else {
-					match self.get(&callback) {
-						Some(ContextItem::Callback(callback)) => (None, Some(callback.clone())),
+					match self.get(&id) {
+						Some(ContextItem::Callback(callback)) => (None, Some(callback)),
 						_ => (None, None),
 					}
 				}) else {
-					println!("Function not found: {}", callback);
+					println!("Function not found: {}", id);
 					self.table_mut().push(Object::default().into());
-					return Some(Object::default());
+					return None;
 				};
 
 				match callback {
@@ -140,7 +139,7 @@ impl SwearRuntime for ContextStack {
 						self.table_mut().push(result);
 					},
 					Callback::Swear(callback) => {
-						self.push(ContextLevel::new(callback.callback.clone()));
+						self.push(ContextLevel::new(callback.callback));
 						let diff = parameters as i128 - callback.args.len() as i128; //? i128 to prevent underflow.
 						if diff > 0 {
 							for _ in 0..=diff {
@@ -152,9 +151,9 @@ impl SwearRuntime for ContextStack {
 							}
 						}
 						
-						for arg in callback.args.iter().rev() {
+						for arg in callback.args.into_iter().rev() {
 							let obj = self.table_mut().pop().unwrap();
-							self.set(arg.clone(), obj.into());
+							self.set(arg, obj.into());
 						}
 					}
 				}
@@ -189,76 +188,76 @@ impl SwearRuntime for ContextStack {
 }
 
 impl ContextStack {
-	fn derive_operations(&mut self, instruction: &TopLevelItem) {
+	fn process_instructions(&mut self, instruction: TopLevelItem) {
 		match instruction {
-			TopLevelItem::Definition(d) => self.derive_operations_definition(d),
-			TopLevelItem::Valuable(v) => self.derive_operations_value(v),
-			TopLevelItem::Dropper(value) => self.derive_operations_dropper(value),
+			TopLevelItem::Definition(d) => self.process_instr_definition(d),
+			TopLevelItem::Valuable(v) => self.process_instr_valuable(v),
+			TopLevelItem::Dropper(value) => self.process_instr_dropper(value),
 		}
 	}
 
-	fn derive_operations_definition(&mut self, definition: &Definition) {
+	fn process_instr_definition(&mut self, definition: Definition) {
 		match definition {
 			Definition::Blueprint { name: _, exprs: _ } => {
 				todo!();
 				// self.ops_mut().push(Operations::RegisterBlueprint {
-				// 	ident: name.clone(),
-				// 	expr: exprs.clone(),
+				// 	ident: name,
+				// 	expr: exprs,
 				// });
 			},
 			Definition::Callback { name, parameters, exprs } => {
 				self.ops_mut().push(Operations::RegisterCallback {
-					ident: name.clone(),
-					parameters: parameters.clone(),
-					expr: exprs.clone(),
+					ident: name,
+					parameters,
+					expr: exprs,
 				});
 			}
 			Definition::Register { name, value } => {
-				self.ops_mut().push(Operations::RegisterObject(name.clone()));
-				self.derive_operations_value(value);
+				self.ops_mut().push(Operations::RegisterObject(name));
+				self.process_instr_valuable(value);
 			},
 		}
 	}
 
-	fn derive_operations_value(&mut self, value: &Valuable) {
+	fn process_instr_valuable(&mut self, value: Valuable) {
 		match value {
 			Valuable::Expression(expr) => {
 				// self.ops_mut().push(Operations::PopContext);
-				self.ops_mut().push(Operations::PushContext(expr.clone()));
+				self.ops_mut().push(Operations::PushContext(expr));
 			},
 			Valuable::ObjectLiteral(literal) => {
-				self.ops_mut().push(Operations::PushObject(literal.clone()));
+				self.ops_mut().push(Operations::PushObject(literal));
 			},
 			Valuable::ObjectConversion(obj_conv) => {
 				self.ops_mut().push(Operations::ConvertObject(obj_conv.symbol));
-				self.derive_operations_value(&obj_conv.value);
+				self.process_instr_valuable(obj_conv.value);
 			},
 			Valuable::Identifier(ident) => {
-				self.ops_mut().push(Operations::PushIdentifier(ident.clone()));
+				self.ops_mut().push(Operations::PushIdentifier(ident));
 			},
 			Valuable::Callback(callback) => {
 				self.ops_mut().push(Operations::ExCallback {
 					method: callback.target.is_some(),
-					callback: callback.id.clone(),
+					callback: callback.id,
 					parameters: callback.parameters.len(),
 				});
 			
-				if let Some(target) = callback.target.as_ref() {
-					self.derive_operations_value(target);
+				if let Some(target) = *callback.target {
+					self.process_instr_valuable(target);
 				}
 
-				for param in callback.parameters.iter() {
-					self.derive_operations_value(param);
+				for param in callback.parameters.into_iter() {
+					self.process_instr_valuable(param);
 				}
 			},
 		}
 	}
 
-	fn derive_operations_dropper(&mut self, value: &Option<Valuable>) {
+	fn process_instr_dropper(&mut self, value: Option<Valuable>) {
 		self.ops_mut().push(Operations::PopContext);
 
 		if let Some(value) = value {
-			self.derive_operations_value(value);
+			self.process_instr_valuable(value);
 		} else {
 			self.ops_mut().push(Operations::PushObject(swear_parser::ObjectLiteral::Zip));
 		}
