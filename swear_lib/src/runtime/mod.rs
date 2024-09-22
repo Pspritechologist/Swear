@@ -9,35 +9,38 @@ use swear_parser::Expression;
 use swear_parser::Repetition;
 use swear_parser::{Definition, TopLevelItem, Valuable};
 
+pub trait SwearRuntime<'rt> {
+	fn new(script: &'rt Expression) -> Self;
+	fn step(&mut self);
+	fn next_operation(&self) -> Option<&Operations<'rt>>;
+	fn last_operation(&self) -> Option<&Operations<'rt>>;
+	fn instruction_index(&self) -> usize;
+	fn is_finished(&self) -> bool;
+	fn get_result(self) -> Option<Object<'rt>>;
+}
+
 #[derive(Debug)]
 pub struct ContextStack<'rt> {
-	// script: Expression,
 	stack: Vec<ContextHolder<'rt>>,
 	at_root: bool,
+	last_op: Option<Operations<'rt>>,
 	table: Vec<ObjectRef<'rt>>,
 	finished: bool,
 	result: Option<Object<'rt>>,
 }
 
-pub trait SwearRuntime<'rt> {
-	fn new(script: &'rt Expression) -> Self;
-	fn step(&mut self);
-	fn is_finished(&self) -> bool;
-	fn get_result(self) -> Option<Object<'rt>>;
-}
-
 impl<'rt> SwearRuntime<'rt> for ContextStack<'rt> {
 	fn new(script: &'rt Expression) -> Self {
-		let mut stack = Self {
-			stack: Vec::new(),
+		Self {
+			stack: vec![
+				ContextLevel::<'rt>::new(&script).into()
+			],
 			at_root: true,
+			last_op: None,
 			table: Vec::new(),
 			finished: false,
 			result: None,
-		};
-
-		stack.stack.push(ContextLevel::<'rt>::new(&script).into());
-		stack
+		}
 	}
 
 	fn step(&mut self) {
@@ -64,6 +67,22 @@ impl<'rt> SwearRuntime<'rt> for ContextStack<'rt> {
 		}
 
 		self.handle_next_op();
+	}
+
+	fn next_operation(&self) -> Option<&Operations<'rt>> {
+		self.ops().last()
+	}
+
+	fn last_operation(&self) -> Option<&Operations<'rt>> {
+		self.last_op.as_ref()
+	}
+
+	fn instruction_index(&self) -> usize {
+		let ContextHolder::RuntimeContext(cont) = self.stack.first().unwrap() else {
+			unreachable!("Stack had no root.");
+		};
+
+		cont.instr_index()
 	}
 
 	fn is_finished(&self) -> bool {

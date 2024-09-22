@@ -9,7 +9,7 @@ pub struct Count {
 
 impl<'rt> Count {
 	fn to_swear_chars(&self) -> Chars {
-		Chars { chars: self.count.clone().with_base_and_precision::<10>(5).value().to_string() }
+		Chars { chars: self.count.clone().with_base_and_precision::<10>(8).value().to_string() }
 	}
 
 	fn to_swear_count(&self) -> Count {
