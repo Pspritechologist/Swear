@@ -34,6 +34,25 @@ impl<'rt> IObject<'rt> for Zip {
 		ObjectInfo::from_str("Zip")
 			.with_description_str("An Object that represents nothing. Nada. Zilch.")
 	}
+
+	fn get_functions(&self) -> HashMap<String, FunctionInfo<'rt>> {
+		let mut functions = HashMap::new();
+
+		// Lest function.
+		// Returns the first argument.
+		functions.insert("lest".to_string(), FunctionInfoBuilder::new("lest".to_string()).build_native(Arc::new(Mutex::new(|_, args: Vec<ObjectRef<'rt>>|
+			match args.first() {
+				Some(arg) => Ok(Some(arg.copy())),
+				None => Err(()),
+			}
+		))));
+
+		// Solid function.
+		// Returns false if Zip.
+		functions.insert("solid".to_string(), FunctionInfoBuilder::new("solid".to_string()).build_native(Arc::new(Mutex::new(|_, _| Ok(Some(Object::from(State::from(false)).into())) ))));
+
+		functions
+	}
 }
 
 impl std::fmt::Debug for Zip {

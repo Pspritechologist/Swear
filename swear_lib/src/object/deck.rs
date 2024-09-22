@@ -57,6 +57,20 @@ impl<'rt> Deck<'rt> {
 			.map(|(i, o)| (Count::from(i).into(), o.clone()))
 			.collect::<Vec<(Object, _)>>())
 	}
+
+	fn get_functions(&self) -> HashMap<String, FunctionInfo<'rt>> {
+		let mut functions = HashMap::new();
+
+		// Lest function.
+		// No op, returns this Object.
+		functions.insert("lest".to_string(), FunctionInfoBuilder::new("lest".to_string()).build_native(Arc::new(Mutex::new(|obj, _| Ok(Some(obj)) ))));
+
+		// Solid function.
+		// Returns false if Zip.
+		functions.insert("solid".to_string(), FunctionInfoBuilder::new("solid".to_string()).build_native(Arc::new(Mutex::new(|_, _| Ok(Some(Object::from(State::from(true)).into())) ))));
+
+		functions
+	}
 }
 
 impl<'rt> std::fmt::Debug for Deck<'rt> {

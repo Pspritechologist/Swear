@@ -9,7 +9,7 @@ pub struct Count {
 
 impl<'rt> Count {
 	fn to_swear_chars(&self) -> Chars {
-		Chars { chars: self.count.to_decimal().value().to_string() }
+		Chars { chars: self.count.clone().with_base_and_precision::<10>(5).value().to_string() }
 	}
 
 	fn to_swear_count(&self) -> Count {
@@ -42,7 +42,7 @@ impl<'rt> Count {
 
 		// Add function.
 		// Adds all arguments to the count.
-		functions.insert("add".to_string(), FunctionInfoBuilder::new("add".to_string()).build(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
+		functions.insert("add".to_string(), FunctionInfoBuilder::new("add".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
 			let mut count_lock = obj.lock();
 			let count = count_lock.as_count_mut().unwrap();
 
@@ -59,7 +59,7 @@ impl<'rt> Count {
 
 		// Sub function.
 		// Subtracts all arguments from the count.
-		functions.insert("sub".to_string(), FunctionInfoBuilder::new("sub".to_string()).build(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
+		functions.insert("sub".to_string(), FunctionInfoBuilder::new("sub".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
 			let mut count_lock = obj.lock();
 			let count = count_lock.as_count_mut().unwrap();
 
@@ -73,6 +73,44 @@ impl<'rt> Count {
 
 			Ok(Some(obj))
 		}))));
+
+		// Equals function.
+		// Returns true if all arguments are equal to the count.
+		functions.insert("equals".to_string(), FunctionInfoBuilder::new("equals".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
+			let count_lock = obj.access();
+			let count = count_lock.as_count().unwrap();
+
+			let mut args = args.iter();
+			while let Some(arg) = args.next() {
+				let arg = arg.access();
+				if count.count != arg.to_count().count {
+					return Ok(Some(Object::from(State::from(false)).into()));
+				}
+			}
+
+			Ok(Some(Object::from(State::from(true)).into()))
+		}))));
+
+		// Round function.
+		// Rounds the count to the nearest whole number.
+		functions.insert("round".to_string(), FunctionInfoBuilder::new("round".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, _| {
+			let mut count_lock = obj.lock();
+			let count = count_lock.as_count_mut().unwrap();
+
+			count.count = count.count.round();
+
+			drop(count_lock);
+
+			Ok(Some(obj))
+		}))));
+
+		// Lest function.
+		// No op, returns this Object.
+		functions.insert("lest".to_string(), FunctionInfoBuilder::new("lest".to_string()).build_native(Arc::new(Mutex::new(|obj, _| Ok(Some(obj)) ))));
+
+		// Solid function.
+		// Returns false if Zip.
+		functions.insert("solid".to_string(), FunctionInfoBuilder::new("solid".to_string()).build_native(Arc::new(Mutex::new(|_, _| Ok(Some(Object::from(State::from(true)).into())) ))));
 
 		functions
 	}

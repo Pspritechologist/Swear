@@ -100,10 +100,10 @@ impl<'rt> ContextStack<'rt> {
 					let funcs = obj.get_functions();
 					let func = funcs.get(id);
 					drop(obj);
-					(Some(objref), func.map(|func| func.function.clone()))
+					(Some(objref), func.map(|func| func.function.clone())) //TODO: Clone?
 				} else {
 					match self.get(&id) {
-						Some(ContextItem::Callback(callback)) => (None, Some(callback.clone())),
+						Some(ContextItem::Callback(callback)) => (None, Some(callback.clone())), //TODO: Clone?
 						_ => (None, None),
 					}
 				}) else {
@@ -131,6 +131,10 @@ impl<'rt> ContextStack<'rt> {
 					},
 					Callback::Swear(callback) => {
 						self.push(ContextLevel::new(&callback.callback).into());
+						if let Some(obj) = obj {
+							self.push(obj.into());
+						}
+						
 						let diff = parameters as i128 - callback.args.len() as i128; //? i128 to prevent underflow.
 						if diff > 0 {
 							for _ in 0..=diff {

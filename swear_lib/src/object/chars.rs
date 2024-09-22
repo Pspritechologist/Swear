@@ -38,7 +38,7 @@ impl<'rt> Chars {
 
 		// Scribe function.
 		// Prints the characters to the console.
-		functions.insert("scribe".to_string(), FunctionInfoBuilder::new("scribe".to_string()).build(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, _| {
+		functions.insert("scribe".to_string(), FunctionInfoBuilder::new("scribe".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, _| {
 			let lock = obj.access();
 			println!("{}", lock.to_chars().chars);
 			Ok(None)
@@ -46,7 +46,7 @@ impl<'rt> Chars {
 
 		// Concat function.
 		// Takes any number of arguments and concatenates them into a single string separated by the method target.
-		functions.insert("concat".to_string(), FunctionInfoBuilder::new("concat".to_string()).build(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
+		functions.insert("concat".to_string(), FunctionInfoBuilder::new("concat".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
 			let target = obj.access();
 			let mut result = String::new();
 			let mut iter = args.iter();
@@ -63,7 +63,7 @@ impl<'rt> Chars {
 
 		// Size function.
 		// Returns the number of characters in the string.
-		functions.insert("size".to_string(), FunctionInfoBuilder::new("size".to_string()).build(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, _| {
+		functions.insert("size".to_string(), FunctionInfoBuilder::new("size".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, _| {
 			let lock = obj.access();
 			Ok(Some(Object::from(Count::from(crate::BigNum::from(lock.to_chars().chars.len()))).into()))
 		}))));
@@ -76,6 +76,14 @@ impl<'rt> Chars {
 		// 		&current_exe().unwrap().with_file_name(format!("libswear_{}", &lock.to_chars().chars)).with_extension("so")
 		// 	).map(|o| Some(o)).map_err(|_| eprintln!("Failed to load library!"))
 		// }))));
+
+		// Lest function.
+		// No op, returns this Object.
+		functions.insert("lest".to_string(), FunctionInfoBuilder::new("lest".to_string()).build_native(Arc::new(Mutex::new(|obj, _| Ok(Some(obj))))));
+
+		// Solid function.
+		// Returns false if Zip.
+		functions.insert("solid".to_string(), FunctionInfoBuilder::new("solid".to_string()).build_native(Arc::new(Mutex::new(|_, _| Ok(Some(Object::from(State::from(true)).into())) ))));
 
 		functions
 	}
