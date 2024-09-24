@@ -37,12 +37,12 @@ impl<'rt> ContextStack<'rt> {
 	/// # Panics
 	/// 
 	/// Panics if the operation stack is empty.
-	pub fn handle_next_op(&mut self) {
+	pub(super) fn handle_next_op(&mut self) {
 		let operation = self.ops_mut().pop().unwrap();
 		self.handle_op(operation);
 	}
 
-	pub fn handle_op(&mut self, op: Operations<'rt>) {
+	pub(super) fn handle_op(&mut self, op: Operations<'rt>) {
 		'op_match: {
 			match op {
 				PushObject(object) => {

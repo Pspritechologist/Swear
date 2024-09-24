@@ -8,6 +8,20 @@ pub struct ObjectRef<'rt> {
 	inner: Arc<RwLock<Object<'rt>>>,
 }
 
+impl<'rt> IntoIterator for ObjectRef<'rt> {
+	type Item = (String, ContextItem<'rt>);
+	type IntoIter = std::collections::hash_map::IntoIter<String, ContextItem<'rt>>;
+	fn into_iter(self) -> Self::IntoIter {
+		match self.access().deref() {
+			Object::Dynamic(obj) => obj.clone().into_iter(),
+			other => {
+				dbg!(other);
+				panic!();
+			},
+		}
+	}
+}
+
 impl<'rt> PartialEq for ObjectRef<'rt> {
 	fn eq(&self, other: &Self) -> bool {
 		*self.access() == *other.access()

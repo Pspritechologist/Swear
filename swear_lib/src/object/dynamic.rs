@@ -1,7 +1,7 @@
 use crate::context::{self, ContextItem};
 use super::*;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 #[repr(C)] //? The main point of this is to allow adding new fields without breaking ABI.
 #[non_exhaustive]
 pub struct Dynamic<'rt> {
@@ -12,6 +12,14 @@ pub struct Dynamic<'rt> {
 	//? interacts with remains loaded until the Object no longer exists.
 	#[allow(unused)]
 	pub(crate) src_lib: Option<Arc<libloading::Library>>,
+}
+
+impl<'rt> IntoIterator for Dynamic<'rt> {
+	type Item = (String, ContextItem<'rt>);
+	type IntoIter = std::collections::hash_map::IntoIter<String, ContextItem<'rt>>;
+	fn into_iter(self) -> Self::IntoIter {
+		self.contents.into_iter()
+	}
 }
 
 impl<'rt> Dynamic<'rt> {

@@ -1,13 +1,12 @@
 pub mod operations;
 
-pub use crate::context::ObjectRef;
 
+
+pub use crate::context::ObjectRef;
 use crate::object::*;
 use crate::context::*;
 use operations::Operations;
-use swear_parser::Expression;
-use swear_parser::Repetition;
-use swear_parser::{Definition, TopLevelItem, Valuable};
+use swear_parser::{Definition, TopLevelItem, Valuable, Repetition, Expression};
 
 pub trait SwearRuntime<'rt> {
 	fn new(script: &'rt Expression) -> Self;
@@ -15,6 +14,9 @@ pub trait SwearRuntime<'rt> {
 	fn next_operation(&self) -> Option<&Operations<'rt>>;
 	fn last_operation(&self) -> Option<&Operations<'rt>>;
 	fn instruction_index(&self) -> usize;
+	fn current_instruction(&self) -> Option<&TopLevelItem>;
+	fn table(&self) -> &[ObjectRef<'rt>];
+	fn stack(&self) -> &[ContextHolder<'rt>];
 	fn is_finished(&self) -> bool;
 	fn get_result(self) -> Option<Object<'rt>>;
 }
@@ -28,6 +30,8 @@ pub struct ContextStack<'rt> {
 	finished: bool,
 	result: Option<Object<'rt>>,
 }
+
+
 
 impl<'rt> SwearRuntime<'rt> for ContextStack<'rt> {
 	fn new(script: &'rt Expression) -> Self {
@@ -83,6 +87,22 @@ impl<'rt> SwearRuntime<'rt> for ContextStack<'rt> {
 		};
 
 		cont.instr_index()
+	}
+
+	fn current_instruction(&self) -> Option<&TopLevelItem> {
+		let ContextHolder::RuntimeContext(cont) = self.stack.first().unwrap() else {
+			unreachable!("Stack had no root.");
+		};
+
+		cont.instructions().get(cont.instr_index())
+	}
+
+	fn table(&self) -> &[ObjectRef<'rt>] {
+		&self.table
+	}
+
+	fn stack(&self) -> &[ContextHolder<'rt>] {
+		&self.stack
 	}
 
 	fn is_finished(&self) -> bool {

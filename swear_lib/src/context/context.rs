@@ -4,7 +4,7 @@ use rustc_hash::FxHashMap as HashMap;
 use super::*;
 use enum_dispatch::enum_dispatch;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 #[enum_dispatch(IContext)]
 pub enum ContextHolder<'rt> {
 	RuntimeContext(RuntimeContext<'rt>),
@@ -22,7 +22,7 @@ impl<'rt> From<BlueprintContext<'rt>> for ContextHolder<'rt> {
 	}
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 #[enum_dispatch(IContext)]
 #[enum_dispatch(IRuntimeContext)]
 pub enum RuntimeContext<'rt> {
@@ -30,10 +30,32 @@ pub enum RuntimeContext<'rt> {
 	Blueprint(BlueprintContext<'rt>),
 }
 
+impl<'rt> IntoIterator for RuntimeContext<'rt> {
+	type Item = (String, ContextItem<'rt>);
+	type IntoIter = std::collections::hash_map::IntoIter<String, ContextItem<'rt>>;
+	fn into_iter(self) -> Self::IntoIter {
+		match self {
+			RuntimeContext::ContextLevel(context) => context.into_iter(),
+			RuntimeContext::Blueprint(context) => context.into_iter(),
+		}
+	}
+}
+
 #[enum_dispatch]
 pub trait IContext<'rt> {
 	fn get(&self, key: &str) -> Option<ContextItem<'rt>>;
 	fn set(&mut self, key: String, value: ContextItem<'rt>);
+}
+
+impl<'rt> IntoIterator for ContextHolder<'rt> {
+	type Item = (String, ContextItem<'rt>);
+	type IntoIter = std::collections::hash_map::IntoIter<String, ContextItem<'rt>>;
+	fn into_iter(self) -> Self::IntoIter {
+		match self {
+			ContextHolder::RuntimeContext(context) => context.into_iter(),
+			ContextHolder::ObjectRef(context) => context.into_iter(),
+		}
+	}
 }
 
 #[enum_dispatch]
@@ -45,12 +67,20 @@ pub trait IRuntimeContext<'rt> {
 	fn instr_index_mut(&mut self) -> &mut usize;
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct ContextLevel<'rt> {
 	pub items: HashMap<String, ContextItem<'rt>>,
 	pub instructions: &'rt Expression,
 	pub instr_index: usize,
 	pub ops: Vec<Operations<'rt>>,
+}
+
+impl<'rt> IntoIterator for ContextLevel<'rt> {
+	type Item = (String, ContextItem<'rt>);
+	type IntoIter = std::collections::hash_map::IntoIter<String, ContextItem<'rt>>;
+	fn into_iter(self) -> Self::IntoIter {
+		self.items.into_iter()
+	}
 }
 
 impl<'rt> ContextLevel<'rt> {
@@ -92,12 +122,20 @@ impl<'rt> IRuntimeContext<'rt> for ContextLevel<'rt> {
 	}
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct BlueprintContext<'rt> {
 	pub items: HashMap<String, ContextItem<'rt>>,
 	pub instructions: &'rt Expression,
 	pub instr_index: usize,
 	pub ops: Vec<Operations<'rt>>,
+}
+
+impl<'rt> IntoIterator for BlueprintContext<'rt> {
+	type Item = (String, ContextItem<'rt>);
+	type IntoIter = std::collections::hash_map::IntoIter<String, ContextItem<'rt>>;
+	fn into_iter(self) -> Self::IntoIter {
+		self.items.into_iter()
+	}
 }
 
 impl<'rt> BlueprintContext<'rt> {
