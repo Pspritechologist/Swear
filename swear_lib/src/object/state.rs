@@ -35,7 +35,7 @@ impl<'rt> State {
 	}
 
 	fn get_functions(&self) -> HashMap<String, FunctionInfo<'rt>> {
-		let mut functions = HashMap::new();
+		let mut functions = HashMap::default();
 
 		// And function.
 		// Returns true if this object and all arguments are true.

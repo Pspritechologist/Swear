@@ -1,6 +1,5 @@
-use std::{env::current_exe, fmt::Debug};
-
 use crate::dyn_libraries;
+use std::{env::current_exe, fmt::Debug};
 
 use super::*;
 
@@ -34,7 +33,7 @@ impl<'rt> Chars {
 	}
 
 	fn get_functions(&self) -> HashMap<String, FunctionInfo<'rt>> {
-		let mut functions = HashMap::new();
+		let mut functions = HashMap::default();
 
 		// Scribe function.
 		// Prints the characters to the console.
@@ -66,6 +65,16 @@ impl<'rt> Chars {
 		functions.insert("size".to_string(), FunctionInfoBuilder::new("size".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, _| {
 			let lock = obj.access();
 			Ok(Some(Object::from(Count::from(crate::BigNum::from(lock.to_chars().chars.len()))).into()))
+		}))));
+
+		// Assign function.
+		// Replaces the value of the Chars in place.
+		functions.insert("assign".to_string(), FunctionInfoBuilder::new("assign".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
+			let mut lock = obj.lock();
+			let new_value = args.get(0).ok_or(())?.access();
+			lock.as_chars_mut().unwrap().chars = new_value.to_chars().chars;
+			drop(lock);
+			Ok(Some(obj))
 		}))));
 
 		// functions.insert("load".to_string(), FunctionInfoBuilder::new("load".to_string()).build(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, _| {

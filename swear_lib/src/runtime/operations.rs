@@ -147,7 +147,7 @@ impl<'rt> ContextStack<'rt> {
 								}
 							}
 							
-							for arg in callback.args.into_iter().rev() {
+							for arg in callback.args.into_iter() {
 								let obj = self.table_pop();
 								self.set(arg, obj.into());
 							}

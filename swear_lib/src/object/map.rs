@@ -1,5 +1,4 @@
 use crate::runtime::ObjectRef;
-
 use super::*;
 
 #[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
@@ -59,7 +58,7 @@ impl<'rt> Map<'rt> {
 	}
 
 	fn get_functions(&self) -> HashMap<String, FunctionInfo<'rt>> {
-		let mut functions = HashMap::new();
+		let mut functions = HashMap::default();
 
 		// Lest function.
 		// No op, returns this Object.

@@ -6,7 +6,8 @@ mod deck;
 mod map;
 mod dynamic;
 
-use std::{collections::HashMap, sync::{Arc, Mutex}};
+use std::sync::{Arc, Mutex};
+use rustc_hash::FxHashMap as HashMap;
 
 pub use chars::*;
 pub use count::*;
@@ -112,7 +113,7 @@ pub trait IObject<'rt> {
 	fn get_info(&self) -> ObjectInfo;
 
 	fn get_functions(&self) -> HashMap<String, FunctionInfo<'rt>> {
-		HashMap::new()
+		HashMap::default()
 	}
 }
 
@@ -158,7 +159,6 @@ impl ObjectInfo {
 #[derive(Clone, Debug)]
 pub struct FunctionInfo<'rt> {
 	pub name: String,
-	pub arg_count: usize,
 	pub function: Callback<'rt>,
 }
 
@@ -175,15 +175,9 @@ impl<'rt> FunctionInfoBuilder {
 		}
 	}
 
-	pub fn with_arg_count(mut self, arg_count: usize) -> Self {
-		self.arg_count = arg_count;
-		self
-	}
-
 	pub fn build_native(self, function: Arc<Mutex<ObjectFunction<'rt>>>) -> FunctionInfo<'rt> {
 		FunctionInfo {
 			name: self.name,
-			arg_count: self.arg_count,
 			function: NativeCallback {
 				arg_count: self.arg_count,
 				callback: function,
@@ -194,7 +188,6 @@ impl<'rt> FunctionInfoBuilder {
 	pub fn build(self, callback: Callback<'rt>) -> FunctionInfo<'rt> {
 		FunctionInfo {
 			name: self.name,
-			arg_count: self.arg_count,
 			function: callback,
 		}
 	}

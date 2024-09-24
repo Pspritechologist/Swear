@@ -1,4 +1,5 @@
 use crate::runtime::operations::Operations;
+use rustc_hash::FxHashMap as HashMap;
 
 use super::*;
 use enum_dispatch::enum_dispatch;
@@ -46,7 +47,7 @@ pub trait IRuntimeContext<'rt> {
 
 #[derive(Debug)]
 pub struct ContextLevel<'rt> {
-	pub items: std::collections::HashMap<String, ContextItem<'rt>>,
+	pub items: HashMap<String, ContextItem<'rt>>,
 	pub instructions: &'rt Expression,
 	pub instr_index: usize,
 	pub ops: Vec<Operations<'rt>>,
@@ -55,7 +56,7 @@ pub struct ContextLevel<'rt> {
 impl<'rt> ContextLevel<'rt> {
 	pub fn new(instructions: &'rt Expression) -> Self {
 		Self {
-			items: std::collections::HashMap::new(),
+			items: HashMap::default(),
 			instructions,
 			instr_index: 0,
 			ops: Vec::new(),
@@ -93,7 +94,7 @@ impl<'rt> IRuntimeContext<'rt> for ContextLevel<'rt> {
 
 #[derive(Debug)]
 pub struct BlueprintContext<'rt> {
-	pub items: std::collections::HashMap<String, ContextItem<'rt>>,
+	pub items: HashMap<String, ContextItem<'rt>>,
 	pub instructions: &'rt Expression,
 	pub instr_index: usize,
 	pub ops: Vec<Operations<'rt>>,
@@ -102,7 +103,7 @@ pub struct BlueprintContext<'rt> {
 impl<'rt> BlueprintContext<'rt> {
 	pub fn new(instructions: &'rt Expression) -> Self {
 		Self {
-			items: std::collections::HashMap::new(),
+			items: HashMap::default(),
 			instructions,
 			instr_index: 0,
 			ops: Vec::new(),

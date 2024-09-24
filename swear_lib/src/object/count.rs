@@ -36,7 +36,7 @@ impl<'rt> Count {
 	}
 
 	fn get_functions(&self) -> HashMap<String, FunctionInfo<'rt>> {
-		let mut functions = HashMap::new();
+		let mut functions = HashMap::default();
 
 		// Arithmetic.
 
@@ -74,14 +74,45 @@ impl<'rt> Count {
 			Ok(Some(obj))
 		}))));
 
+		// Mul function.
+		// Multiplies by all arguments one after the other.
+		functions.insert("mul".to_string(), FunctionInfoBuilder::new("mul".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
+			let mut count_lock = obj.lock();
+			let count = count_lock.as_count_mut().unwrap();
+
+			for arg in args {
+				let arg = arg.access();
+				count.count *= arg.to_count().count;
+			}
+
+			drop(count_lock);
+
+			Ok(Some(obj))
+		}))));
+
+		// Div function.
+		// Multiplies by all arguments one after the other.
+		functions.insert("div".to_string(), FunctionInfoBuilder::new("div".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
+			let mut count_lock = obj.lock();
+			let count = count_lock.as_count_mut().unwrap();
+
+			for arg in args {
+				let arg = arg.access();
+				count.count /= arg.to_count().count;
+			}
+
+			drop(count_lock);
+
+			Ok(Some(obj))
+		}))));
+
 		// Equals function.
 		// Returns true if all arguments are equal to the count.
 		functions.insert("equals".to_string(), FunctionInfoBuilder::new("equals".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
 			let count_lock = obj.access();
 			let count = count_lock.as_count().unwrap();
-
-			let mut args = args.iter();
-			while let Some(arg) = args.next() {
+		
+			for arg in args {
 				let arg = arg.access();
 				if count.count != arg.to_count().count {
 					return Ok(Some(Object::from(State::from(false)).into()));
@@ -90,6 +121,71 @@ impl<'rt> Count {
 
 			Ok(Some(Object::from(State::from(true)).into()))
 		}))));
+		
+		// Greater function.
+		// Returns true if all arguments are less than the count.
+		functions.insert("greater".to_string(), FunctionInfoBuilder::new("greater".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
+			let count_lock = obj.access();
+			let count = count_lock.as_count().unwrap();
+
+			for arg in args {
+				let arg = arg.access();
+				if count.count <= arg.to_count().count {
+					return Ok(Some(Object::from(State::from(false)).into()));
+				}
+			}
+
+			Ok(Some(Object::from(State::from(true)).into()))
+		}))));
+
+		// Less function.
+		// Returns true if all arguments are greater than the count.
+		functions.insert("less".to_string(), FunctionInfoBuilder::new("less".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
+			let count_lock = obj.access();
+			let count = count_lock.as_count().unwrap();
+
+			for arg in args {
+				let arg = arg.access();
+				if count.count >= arg.to_count().count {
+					return Ok(Some(Object::from(State::from(false)).into()));
+				}
+			}
+
+			Ok(Some(Object::from(State::from(true)).into()))
+		}))));
+
+		// Greateq function.
+		// Returns true if all arguments are less than or equal to the count.
+		functions.insert("greateq".to_string(), FunctionInfoBuilder::new("greateq".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
+			let count_lock = obj.access();
+			let count = count_lock.as_count().unwrap();
+
+			for arg in args {
+				let arg = arg.access();
+				if count.count < arg.to_count().count {
+					return Ok(Some(Object::from(State::from(false)).into()));
+				}
+			}
+
+			Ok(Some(Object::from(State::from(true)).into()))
+		}))));
+
+		// Lesseq function.
+		// Returns true if all arguments are greater than or equal to the count.
+		functions.insert("lesseq".to_string(), FunctionInfoBuilder::new("lesseq".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
+			let count_lock = obj.access();
+			let count = count_lock.as_count().unwrap();
+
+			for arg in args {
+				let arg = arg.access();
+				if count.count > arg.to_count().count {
+					return Ok(Some(Object::from(State::from(false)).into()));
+				}
+			}
+
+			Ok(Some(Object::from(State::from(true)).into()))
+		}))));
+
 
 		// Round function.
 		// Rounds the count to the nearest whole number.

@@ -36,7 +36,7 @@ impl<'rt> IObject<'rt> for Zip {
 	}
 
 	fn get_functions(&self) -> HashMap<String, FunctionInfo<'rt>> {
-		let mut functions = HashMap::new();
+		let mut functions = HashMap::default();
 
 		// Lest function.
 		// Returns the first argument.
