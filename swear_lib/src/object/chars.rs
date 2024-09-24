@@ -17,7 +17,7 @@ impl<'rt> Chars {
 	}
 
 	fn to_swear_count(&self) -> Count {
-		Count { count: self.chars.parse().unwrap_or_else(|_| crate::BigNum::from(self.chars.len())) }
+		Count { count: self.chars.parse().unwrap_or_else(|_| self.chars.len() as i64) }
 	}
 
 	fn to_swear_state(&self) -> State {
@@ -64,7 +64,7 @@ impl<'rt> Chars {
 		// Returns the number of characters in the string.
 		functions.insert("size".to_string(), FunctionInfoBuilder::new("size".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, _| {
 			let lock = obj.access();
-			Ok(Some(Object::from(Count::from(crate::BigNum::from(lock.to_chars().chars.len()))).into()))
+			Ok(Some(Object::from(Count::from(lock.to_chars().chars.len())).into()))
 		}))));
 
 		// Assign function.

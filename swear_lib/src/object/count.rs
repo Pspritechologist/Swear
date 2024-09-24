@@ -4,12 +4,12 @@ use super::*;
 #[derive(Clone, Default, PartialEq, Eq)]
 #[swear_object]
 pub struct Count {
-	pub count: crate::BigNum,
+	pub count: i64,
 }
 
 impl<'rt> Count {
 	fn to_swear_chars(&self) -> Chars {
-		Chars { chars: self.count.clone().with_base_and_precision::<10>(8).value().to_string() }
+		Chars { chars: self.count.to_string() }
 	}
 
 	fn to_swear_count(&self) -> Count {
@@ -17,15 +17,15 @@ impl<'rt> Count {
 	}
 
 	fn to_swear_state(&self) -> State {
-		State { state: self.count > crate::BigNum::ONE }
+		State { state: self.count > 1 }
 	}
 
 	fn to_swear_deck(&self) -> Deck<'rt> {
 		let mut i = self.count.clone();
 		let mut deck = vec![];
-		while i.gt(&crate::BigNum::ZERO) {
+		while i > 0 {
 			deck.push(Object::from(Count::from(i.clone())).into());
-			i -= crate::BigNum::ONE;
+			i -= 1;
 		}
 
 		Deck { deck }
@@ -153,7 +153,7 @@ impl<'rt> Count {
 
 			Ok(Some(Object::from(State::from(true)).into()))
 		}))));
-
+		
 		// Greateq function.
 		// Returns true if all arguments are less than or equal to the count.
 		functions.insert("greateq".to_string(), FunctionInfoBuilder::new("greateq".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
@@ -193,7 +193,7 @@ impl<'rt> Count {
 			let mut count_lock = obj.lock();
 			let count = count_lock.as_count_mut().unwrap();
 
-			count.count = count.count.round();
+			// count.count = count.count.round();
 
 			drop(count_lock);
 
@@ -218,8 +218,8 @@ impl std::fmt::Debug for Count {
 	}
 }
 
-impl From<crate::BigNum> for Count {
-	fn from(count: crate::BigNum) -> Self {
+impl From<i64> for Count {
+	fn from(count: i64) -> Self {
 		Self { count }
 	}
 }
@@ -236,15 +236,15 @@ impl From<crate::BigNum> for Count {
 // 	}
 // }
 
-impl From<i64> for Count {
-	fn from(count: i64) -> Self {
-		Self { count: count.into() }
-	}
-}
+// impl From<i64> for Count {
+// 	fn from(count: i64) -> Self {
+// 		Self { count: count.into() }
+// 	}
+// }
 
 impl From<u64> for Count {
 	fn from(count: u64) -> Self {
-		Self { count: count.into() }
+		Self { count: count as i64 }
 	}
 }
 
@@ -262,12 +262,12 @@ impl From<u32> for Count {
 
 impl From<isize> for Count {
 	fn from(count: isize) -> Self {
-		Self { count: count.into() }
+		Self { count: count as i64 }
 	}
 }
 
 impl From<usize> for Count {
 	fn from(count: usize) -> Self {
-		Self { count: count.into() }
+		Self { count: count as i64 }
 	}
 }

@@ -10,7 +10,6 @@ enum_dispatch = "*"
 rand = "*"
 enum-as-inner = "*"
 rustc-hash = "*"
-ouroboros = "*"
 swear_parser = { path = "swear_parser", default-features = false }
 swear_lib_macros = { path = "swear_lib_macros", optional = false }
 dashu-float = { version = "*", features = [ "rand" ] }

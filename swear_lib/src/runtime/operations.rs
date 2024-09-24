@@ -159,8 +159,8 @@ impl<'rt> ContextStack<'rt> {
 					let cond = cond.access();
 					let count = match &*cond {
 						Object::State(state) => if state.state { 1 } else { 0 },
-						Object::Count(count) => count.count.to_f32().value() as usize,
-						obj => obj.to_count().count.to_f32().value() as usize,
+						Object::Count(count) => count.count as usize,
+						obj => obj.to_count().count as usize,
 					};
 
 					for _ in 0..count {

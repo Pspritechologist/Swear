@@ -26,6 +26,7 @@ use swear_lib_macros::swear_object;
 use crate::context::{Callback, NativeCallback, ObjectRef};
 
 #[enum_dispatch]
+#[derive(Clone)]
 #[derive(enum_as_inner::EnumAsInner)]
 pub enum Object<'rt> {
 	Chars,
