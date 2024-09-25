@@ -7,7 +7,7 @@ use super::*;
 pub struct Dynamic<'rt> {
 	name: String,
 	description: Option<String>,
-	contents: std::collections::HashMap<String, ContextItem<'rt>>,
+	contents: HashMap<String, ContextItem<'rt>>,
 	//? It's very important we ensure whatever library this Object
 	//? interacts with remains loaded until the Object no longer exists.
 	#[allow(unused)]
@@ -16,7 +16,7 @@ pub struct Dynamic<'rt> {
 
 impl<'rt> IntoIterator for Dynamic<'rt> {
 	type Item = (String, ContextItem<'rt>);
-	type IntoIter = std::collections::hash_map::IntoIter<String, ContextItem<'rt>>;
+	type IntoIter = std::collections::btree_map::IntoIter<String, ContextItem<'rt>>;
 	fn into_iter(self) -> Self::IntoIter {
 		self.contents.into_iter()
 	}

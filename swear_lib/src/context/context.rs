@@ -1,5 +1,5 @@
 use crate::runtime::operations::Operations;
-use rustc_hash::FxHashMap as HashMap;
+use std::collections::BTreeMap as HashMap;
 
 use super::*;
 use enum_dispatch::enum_dispatch;
@@ -32,7 +32,7 @@ pub enum RuntimeContext<'rt> {
 
 impl<'rt> IntoIterator for RuntimeContext<'rt> {
 	type Item = (String, ContextItem<'rt>);
-	type IntoIter = std::collections::hash_map::IntoIter<String, ContextItem<'rt>>;
+	type IntoIter = std::collections::btree_map::IntoIter<String, ContextItem<'rt>>;
 	fn into_iter(self) -> Self::IntoIter {
 		match self {
 			RuntimeContext::ContextLevel(context) => context.into_iter(),
@@ -49,7 +49,7 @@ pub trait IContext<'rt> {
 
 impl<'rt> IntoIterator for ContextHolder<'rt> {
 	type Item = (String, ContextItem<'rt>);
-	type IntoIter = std::collections::hash_map::IntoIter<String, ContextItem<'rt>>;
+	type IntoIter = std::collections::btree_map::IntoIter<String, ContextItem<'rt>>;
 	fn into_iter(self) -> Self::IntoIter {
 		match self {
 			ContextHolder::RuntimeContext(context) => context.into_iter(),
@@ -77,7 +77,7 @@ pub struct ContextLevel<'rt> {
 
 impl<'rt> IntoIterator for ContextLevel<'rt> {
 	type Item = (String, ContextItem<'rt>);
-	type IntoIter = std::collections::hash_map::IntoIter<String, ContextItem<'rt>>;
+	type IntoIter = std::collections::btree_map::IntoIter<String, ContextItem<'rt>>;
 	fn into_iter(self) -> Self::IntoIter {
 		self.items.into_iter()
 	}
@@ -132,7 +132,7 @@ pub struct BlueprintContext<'rt> {
 
 impl<'rt> IntoIterator for BlueprintContext<'rt> {
 	type Item = (String, ContextItem<'rt>);
-	type IntoIter = std::collections::hash_map::IntoIter<String, ContextItem<'rt>>;
+	type IntoIter = std::collections::btree_map::IntoIter<String, ContextItem<'rt>>;
 	fn into_iter(self) -> Self::IntoIter {
 		self.items.into_iter()
 	}

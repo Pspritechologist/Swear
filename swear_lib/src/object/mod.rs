@@ -7,7 +7,7 @@ mod map;
 mod dynamic;
 
 use std::sync::{Arc, Mutex};
-use rustc_hash::FxHashMap as HashMap;
+use std::collections::BTreeMap as HashMap;
 
 pub use chars::*;
 pub use count::*;

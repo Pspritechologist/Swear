@@ -10,7 +10,7 @@ pub struct ObjectRef<'rt> {
 
 impl<'rt> IntoIterator for ObjectRef<'rt> {
 	type Item = (String, ContextItem<'rt>);
-	type IntoIter = std::collections::hash_map::IntoIter<String, ContextItem<'rt>>;
+	type IntoIter = std::collections::btree_map::IntoIter<String, ContextItem<'rt>>;
 	fn into_iter(self) -> Self::IntoIter {
 		match self.access().deref() {
 			Object::Dynamic(obj) => obj.clone().into_iter(),
