@@ -29,8 +29,8 @@ pub fn swear_object(input: ItemStruct) -> TokenStream {
 		}
 
 		#[inline(always)]
-		fn get_functions(&self) -> HashMap<String, FunctionInfo<'rt>> {
-			self.get_functions()
+		fn get_function(&self, name: &str) -> Option<FunctionInfo<'rt>> {
+			self.get_function(name)
 		}
 	};
 

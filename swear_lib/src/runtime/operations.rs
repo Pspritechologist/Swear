@@ -98,8 +98,7 @@ impl<'rt> ContextStack<'rt> {
 					let (obj, Some(callback)) = (if method {
 						let objref = self.table_pop();
 						let obj = objref.access();
-						let funcs = obj.get_functions();
-						let func = funcs.get(id);
+						let func = obj.get_function(id);
 						drop(obj);
 						(Some(objref), func.map(|func| func.function.clone())) //TODO: Clone?
 					} else {

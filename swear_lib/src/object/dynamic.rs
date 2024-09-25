@@ -58,17 +58,26 @@ impl<'rt> IObject<'rt> for Dynamic<'rt> {
 			.with_description(self.description.clone())
 	}
 
-	fn get_functions(&self) -> HashMap<String, FunctionInfo<'rt>> {
-		self.contents.iter().filter_map(|(key, value)| match value {
-			ContextItem::Callback(Callback::Native(NativeCallback { callback, .. })) => {
-				Some((key.clone(), FunctionInfoBuilder::new(key.clone()).build_native(callback.clone()))) //TODO: Clone :(
-			},
-			ContextItem::Callback(callback) => {
-				Some((key.clone(), FunctionInfoBuilder::new(key.clone()).build(callback.clone()))) //TODO: Clone :(
-			},
-			_ => None,
-		}).collect()
+	fn get_function(&self, name: &str) -> Option<FunctionInfo<'rt>> {
+		// See if a function of the matching name exists in the context.
+		if let Some(ContextItem::Callback(cb)) = self.contents.get(name) {
+			Some(FunctionInfoBuilder::new(name.to_string()).build(cb.clone()))
+		} else {
+			None
+		}
 	}
+
+	// fn get_functions(&self) -> HashMap<String, FunctionInfo<'rt>> {
+	// 	self.contents.iter().filter_map(|(key, value)| match value {
+	// 		ContextItem::Callback(Callback::Native(NativeCallback { callback, .. })) => {
+	// 			Some((key.clone(), FunctionInfoBuilder::new(key.clone()).build_native(callback.clone()))) //TODO: Clone :(
+	// 		},
+	// 		ContextItem::Callback(callback) => {
+	// 			Some((key.clone(), FunctionInfoBuilder::new(key.clone()).build(callback.clone()))) //TODO: Clone :(
+	// 		},
+	// 		_ => None,
+	// 	}).collect()
+	// }
 }
 
 impl<'rt> context::IContext<'rt> for Dynamic<'rt> {

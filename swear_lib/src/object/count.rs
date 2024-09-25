@@ -35,14 +35,12 @@ impl<'rt> Count {
 		Map::default()
 	}
 
-	fn get_functions(&self) -> HashMap<String, FunctionInfo<'rt>> {
-		let mut functions = HashMap::default();
-
-		// Arithmetic.
-
+	fn get_function(&self, name: &str) -> Option<FunctionInfo<'rt>> {
+		Some(match name {
+			
 		// Add function.
 		// Adds all arguments to the count.
-		functions.insert("add".to_string(), FunctionInfoBuilder::new("add".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
+		"add" => FunctionInfoBuilder::new("add".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
 			let mut count_lock = obj.lock();
 			let count = count_lock.as_count_mut().unwrap();
 
@@ -55,11 +53,11 @@ impl<'rt> Count {
 			drop(count_lock);
 
 			Ok(Some(obj))
-		}))));
+		}))),
 
 		// Sub function.
 		// Subtracts all arguments from the count.
-		functions.insert("sub".to_string(), FunctionInfoBuilder::new("sub".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
+		"sub" => FunctionInfoBuilder::new("sub".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
 			let mut count_lock = obj.lock();
 			let count = count_lock.as_count_mut().unwrap();
 
@@ -72,11 +70,11 @@ impl<'rt> Count {
 			drop(count_lock);
 
 			Ok(Some(obj))
-		}))));
+		}))),
 
 		// Mul function.
 		// Multiplies by all arguments one after the other.
-		functions.insert("mul".to_string(), FunctionInfoBuilder::new("mul".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
+		"mul" => FunctionInfoBuilder::new("mul".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
 			let mut count_lock = obj.lock();
 			let count = count_lock.as_count_mut().unwrap();
 
@@ -88,11 +86,11 @@ impl<'rt> Count {
 			drop(count_lock);
 
 			Ok(Some(obj))
-		}))));
+		}))),
 
 		// Div function.
 		// Multiplies by all arguments one after the other.
-		functions.insert("div".to_string(), FunctionInfoBuilder::new("div".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
+		"div" => FunctionInfoBuilder::new("div".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
 			let mut count_lock = obj.lock();
 			let count = count_lock.as_count_mut().unwrap();
 
@@ -104,11 +102,11 @@ impl<'rt> Count {
 			drop(count_lock);
 
 			Ok(Some(obj))
-		}))));
+		}))),
 
 		// Equals function.
 		// Returns true if all arguments are equal to the count.
-		functions.insert("equals".to_string(), FunctionInfoBuilder::new("equals".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
+		"equals" => FunctionInfoBuilder::new("equals".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
 			let count_lock = obj.access();
 			let count = count_lock.as_count().unwrap();
 		
@@ -120,11 +118,11 @@ impl<'rt> Count {
 			}
 
 			Ok(Some(Object::from(State::from(true)).into()))
-		}))));
-		
+		}))),
+
 		// Greater function.
 		// Returns true if all arguments are less than the count.
-		functions.insert("greater".to_string(), FunctionInfoBuilder::new("greater".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
+		"greater" => FunctionInfoBuilder::new("greater".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
 			let count_lock = obj.access();
 			let count = count_lock.as_count().unwrap();
 
@@ -136,11 +134,11 @@ impl<'rt> Count {
 			}
 
 			Ok(Some(Object::from(State::from(true)).into()))
-		}))));
+		}))),
 
 		// Less function.
 		// Returns true if all arguments are greater than the count.
-		functions.insert("less".to_string(), FunctionInfoBuilder::new("less".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
+		"less" => FunctionInfoBuilder::new("less".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
 			let count_lock = obj.access();
 			let count = count_lock.as_count().unwrap();
 
@@ -152,11 +150,11 @@ impl<'rt> Count {
 			}
 
 			Ok(Some(Object::from(State::from(true)).into()))
-		}))));
-		
+		}))),
+
 		// Greateq function.
 		// Returns true if all arguments are less than or equal to the count.
-		functions.insert("greateq".to_string(), FunctionInfoBuilder::new("greateq".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
+		"greateq" => FunctionInfoBuilder::new("greateq".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
 			let count_lock = obj.access();
 			let count = count_lock.as_count().unwrap();
 
@@ -168,11 +166,11 @@ impl<'rt> Count {
 			}
 
 			Ok(Some(Object::from(State::from(true)).into()))
-		}))));
+		}))),
 
 		// Lesseq function.
 		// Returns true if all arguments are greater than or equal to the count.
-		functions.insert("lesseq".to_string(), FunctionInfoBuilder::new("lesseq".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
+		"lesseq" => FunctionInfoBuilder::new("lesseq".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, args: Vec<ObjectRef<'rt>>| {
 			let count_lock = obj.access();
 			let count = count_lock.as_count().unwrap();
 
@@ -184,12 +182,11 @@ impl<'rt> Count {
 			}
 
 			Ok(Some(Object::from(State::from(true)).into()))
-		}))));
-
+		}))),
 
 		// Round function.
 		// Rounds the count to the nearest whole number.
-		functions.insert("round".to_string(), FunctionInfoBuilder::new("round".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, _| {
+		"round" => FunctionInfoBuilder::new("round".to_string()).build_native(Arc::new(Mutex::new(|obj: ObjectRef<'rt>, _| {
 			let mut count_lock = obj.lock();
 			let count = count_lock.as_count_mut().unwrap();
 
@@ -198,17 +195,18 @@ impl<'rt> Count {
 			drop(count_lock);
 
 			Ok(Some(obj))
-		}))));
+		}))),
 
 		// Lest function.
 		// No op, returns this Object.
-		functions.insert("lest".to_string(), FunctionInfoBuilder::new("lest".to_string()).build_native(Arc::new(Mutex::new(|obj, _| Ok(Some(obj)) ))));
+		"lest" => FunctionInfoBuilder::new("lest".to_string()).build_native(Arc::new(Mutex::new(|obj, _| Ok(Some(obj))))),
 
 		// Solid function.
 		// Returns false if Zip.
-		functions.insert("solid".to_string(), FunctionInfoBuilder::new("solid".to_string()).build_native(Arc::new(Mutex::new(|_, _| Ok(Some(Object::from(State::from(true)).into())) ))));
+		"solid" => FunctionInfoBuilder::new("solid".to_string()).build_native(Arc::new(Mutex::new(|_, _| Ok(Some(Object::from(State::from(true)).into()))))),
 
-		functions
+			_ => return None,
+		})
 	}
 }
 

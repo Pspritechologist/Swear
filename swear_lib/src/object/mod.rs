@@ -113,9 +113,13 @@ pub trait IObject<'rt> {
 
 	fn get_info(&self) -> ObjectInfo;
 
-	fn get_functions(&self) -> HashMap<String, FunctionInfo<'rt>> {
-		HashMap::default()
+	fn get_function(&self, _name: &str) -> Option<FunctionInfo<'rt>> {
+		None
 	}
+
+	// fn get_functions(&self) -> HashMap<String, FunctionInfo<'rt>> {
+	// 	HashMap::default()
+	// }
 }
 
 #[non_exhaustive]

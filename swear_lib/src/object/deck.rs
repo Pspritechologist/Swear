@@ -57,18 +57,21 @@ impl<'rt> Deck<'rt> {
 			.collect::<Vec<(Object, _)>>())
 	}
 
-	fn get_functions(&self) -> HashMap<String, FunctionInfo<'rt>> {
-		let mut functions = HashMap::default();
+	fn get_function(&self, name: &str) -> Option<FunctionInfo<'rt>> {
+		Some(match name {
+			// Lest function.
+			// No op, returns this Object.
+			"lest" =>
+				FunctionInfoBuilder::new("lest".to_string()).build_native(Arc::new(Mutex::new(|obj, _| Ok(Some(obj)) ))),
+			
+			// Solid function.
+			// Returns false if Zip.
+			"solid" =>
+				FunctionInfoBuilder::new("solid".to_string()).build_native(Arc::new(Mutex::new(|_, _| Ok(Some(Object::from(State::from(true)).into())) ))),
 
-		// Lest function.
-		// No op, returns this Object.
-		functions.insert("lest".to_string(), FunctionInfoBuilder::new("lest".to_string()).build_native(Arc::new(Mutex::new(|obj, _| Ok(Some(obj)) ))));
+			_ => return None,
+		})
 
-		// Solid function.
-		// Returns false if Zip.
-		functions.insert("solid".to_string(), FunctionInfoBuilder::new("solid".to_string()).build_native(Arc::new(Mutex::new(|_, _| Ok(Some(Object::from(State::from(true)).into())) ))));
-
-		functions
 	}
 }
 
