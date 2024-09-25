@@ -12,11 +12,9 @@ fn main() {
 		}
 	};
 
-	let time = std::time::Instant::now();
 	let mut runtime = swear_lib::runtime::ContextStack::new(&script);
 	while !runtime.is_finished() {
 		runtime.step();
 	}
-	println!("Time: {:?}", time.elapsed());
-	println!("Result: {:#?}", runtime.get_result().unwrap());
+	std::hint::black_box(runtime.get_result().unwrap());
 }

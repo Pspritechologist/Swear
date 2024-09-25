@@ -5,6 +5,15 @@ name = "swear"
 version = "0.1.0"
 edition = "2024"
 
+[profile.release]
+lto = true
+strip = true
+
+[profile.profiling]
+inherits = "release"
+strip = false
+debug = true
+
 [dependencies]
 swear_lib = { path = "swear_lib" }
 # swear_parser = { path = "swear_lib/swear_parser", features = [ "serde" ]}
@@ -14,3 +23,10 @@ swear_lib = { path = "swear_lib" }
 
 [features]
 serde = [ "swear_lib/serde" ]
+
+[dev-dependencies]
+divan = "*"
+
+[[bench]]
+name = "bench"
+harness = false
